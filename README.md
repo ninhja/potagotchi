@@ -19,10 +19,10 @@ https://github.com/YCAMInterlab/cga.js
 https://github.com/YCAMInterlab/mda.js
 
 Cool Examples:
-- Random harmonic sphere generator
+- Random harmonic sphere generator. Good UI w/ sliders to adjust settings, similarities in code
 http://haptic-data.com/toxiclibsjs/examples/spherical-harmonics-three
-Good UI w/ sliders to adjust settings, similarities in code
+
 
 New Stretch Goals:
-Physical interface
-Giant Tamagotchi: Use Melissa’s laptop (flexible, touch screen) and laser cut an egg shell around it, use mouse for buttons
+- Physical interface
+- Giant Tamagotchi: Use Melissa’s laptop (flexible, touch screen) and laser cut an egg shell around it, use mouse for buttons
