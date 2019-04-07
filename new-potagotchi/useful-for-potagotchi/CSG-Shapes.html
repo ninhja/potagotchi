@@ -1,20 +1,23 @@
 <!doctype html>
 <html lang="en">
 <head>
-	<title>Shapes (Three.js)</title>
+	<title>CSG-Shapes (Three.js)</title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 	<link rel=stylesheet href="css/base.css"/>
 </head>
 <body>
 
-<script src="js/Three.js"></script>
+<script src="js/Three58.js"></script>
 <script src="js/Detector.js"></script>
 <script src="js/Stats.js"></script>
 <script src="js/OrbitControls.js"></script>
 <script src="js/THREEx.KeyboardState.js"></script>
 <script src="js/THREEx.FullScreen.js"></script>
 <script src="js/THREEx.WindowResize.js"></script>
+
+<!-- Constructive Solid Geometry library by ChandlerPrall -->
+<script src="js/ThreeCSG.js"></script>
 
 <!-- jQuery code to display an information button and box when clicked. -->
 <script src="js/jquery-1.9.1.js"></script>
@@ -85,7 +88,7 @@ function init()
 	light.position.set(0,250,0);
 	scene.add(light);
 	// FLOOR
-	var floorTexture = new THREE.ImageUtils.loadTexture( 'images/grid.jpg' );
+	var floorTexture = new THREE.ImageUtils.loadTexture( 'images/grid.jpeg' );
 	floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
 	floorTexture.repeat.set( 10, 10 );
 	var floorMaterial = new THREE.MeshBasicMaterial( { map: floorTexture, side: THREE.DoubleSide } );
@@ -109,17 +112,31 @@ function init()
 	var darkMaterial = new THREE.MeshBasicMaterial( { color: 0xffffcc } );
 	var wireframeMaterial = new THREE.MeshBasicMaterial( { color: 0x000000, wireframe: true, transparent: true } );
 	var multiMaterial = [ darkMaterial, wireframeMaterial ];
+  var normalMaterial = new THREE.MeshNormalMaterial();
 
 	///////////
 	// ROW 1 //
 	///////////
 
 	// cube
-	var shape = THREE.SceneUtils.createMultiMaterialObject(
-		new THREE.CubeGeometry(50, 50, 50, 1, 1, 1),
-		multiMaterial );
-	shape.position.set(-200, 50, 100);
-	scene.add( shape );
+	var bigCube = new THREE.CubeGeometry(50, 50, 50, 1, 1, 1)
+  var bigCubeMesh = new THREE.Mesh( bigCube );
+  var bigCubeBSP = new ThreeBSP( bigCubeMesh );
+
+  var lilCube = new THREE.CubeGeometry(50, 40, 50, 1, 1, 1)
+  var lilCubeMesh = new THREE.Mesh( lilCube );
+  var lilCubeBSP = new ThreeBSP( lilCubeMesh );
+
+  // bigCube subtract lilCube
+	var newBSP = bigCubeBSP.subtract( lilCubeBSP );
+	var newMesh = newBSP.toMesh( normalMaterial );
+	newMesh.position.set(-180, 60, 0);
+	scene.add( newMesh );
+
+	// shape.position.set(-200, 50, 100);
+	// scene.add( cube );
+
+
 
 	// // icosahedron
 	// var shape = THREE.SceneUtils.createMultiMaterialObject(
