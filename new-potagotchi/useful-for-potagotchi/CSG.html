@@ -52,8 +52,8 @@ var cube;
 init();
 animate();
 
-// FUNCTIONS 		
-function init() 
+// FUNCTIONS
+function init()
 {
 	// SCENE
 	scene = new THREE.Scene();
@@ -63,12 +63,12 @@ function init()
 	camera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR);
 	scene.add(camera);
 	camera.position.set(0,150,400);
-	camera.lookAt(scene.position);	
+	camera.lookAt(scene.position);
 	// RENDERER
 	if ( Detector.webgl )
 		renderer = new THREE.WebGLRenderer( {antialias:true} );
 	else
-		renderer = new THREE.CanvasRenderer(); 
+		renderer = new THREE.CanvasRenderer();
 	renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 	container = document.getElementById( 'ThreeJS' );
 	container.appendChild( renderer.domElement );
@@ -88,8 +88,8 @@ function init()
 	light.position.set(0,250,0);
 	scene.add(light);
 	// FLOOR
-	var floorTexture = new THREE.ImageUtils.loadTexture( 'images/checkerboard.jpg' );
-	floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping; 
+	var floorTexture = new THREE.ImageUtils.loadTexture( 'images/grid.jpg' );
+	floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
 	floorTexture.repeat.set( 10, 10 );
 	var floorMaterial = new THREE.MeshBasicMaterial( { map: floorTexture, side: THREE.DoubleSide } );
 	var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 10, 10);
@@ -102,21 +102,21 @@ function init()
 	var skyBoxMaterial = new THREE.MeshBasicMaterial( { color: 0x9999ff, side: THREE.BackSide } );
 	var skyBox = new THREE.Mesh( skyBoxGeometry, skyBoxMaterial );
 	scene.add(skyBox);
-	
+
 	////////////
 	// CUSTOM //
 	////////////
-	
+
 	var materialNormal = new THREE.MeshNormalMaterial();
-	
+
 	var cubeGeometry = new THREE.CubeGeometry( 100, 100, 100, 1, 1, 1 );
 	var cubeMesh = new THREE.Mesh( cubeGeometry );
 	var cubeBSP = new ThreeBSP( cubeMesh );
-		
+
 	var sphereGeometry = new THREE.SphereGeometry( 60, 32, 32 );
 	var sphereMesh = new THREE.Mesh( sphereGeometry );
 	var sphereBSP = new ThreeBSP( sphereMesh );
-	
+
 	// Example #1 - Cube subtract Sphere
 	var newBSP = cubeBSP.subtract( sphereBSP );
 	var newMesh = newBSP.toMesh( materialNormal );
@@ -128,7 +128,7 @@ function init()
 	var newMesh = newBSP.toMesh( materialNormal );
 	newMesh.position.set(180, 60, 0);
 	scene.add( newMesh );
-	
+
 	// Example #3 - Cube union Sphere
 	var newBSP = sphereBSP.union( cubeBSP );
 	var newMesh = newBSP.toMesh( materialNormal );
@@ -142,25 +142,25 @@ function init()
 	scene.add( newMesh );
 }
 
-function animate() 
+function animate()
 {
     requestAnimationFrame( animate );
-	render();		
+	render();
 	update();
 }
 
 function update()
 {
-	if ( keyboard.pressed("z") ) 
-	{ 
+	if ( keyboard.pressed("z") )
+	{
 		// do something
 	}
-	
+
 	controls.update();
 	stats.update();
 }
 
-function render() 
+function render()
 {
 	renderer.render( scene, camera );
 }
