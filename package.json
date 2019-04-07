@@ -1,0 +1,19 @@
+{
+  "name": "potagotchi",
+  "version": "1.0.0",
+  "description": "um npm file thing? initializing package.json? idk what this is ",
+  "main": "three.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ninhja/potagotchi.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ninhja/potagotchi/issues"
+  },
+  "homepage": "https://github.com/ninhja/potagotchi#readme"
+}
