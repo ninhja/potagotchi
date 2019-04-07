@@ -117,29 +117,38 @@ function init()
 	var sphereMesh = new THREE.Mesh( sphereGeometry );
 	var sphereBSP = new ThreeBSP( sphereMesh );
 
+	var smallCubeGeometry = new THREE.CubeGeometry( 90, 100, 90, 1, 1, 1 );
+	var smallCubeMesh = new THREE.Mesh( smallCubeGeometry );
+	var smallCubeBSP = new ThreeBSP( smallCubeMesh );
+
 	// Example #1 - Cube subtract Sphere
 	var newBSP = cubeBSP.subtract( sphereBSP );
 	var newMesh = newBSP.toMesh( materialNormal );
 	newMesh.position.set(-180, 60, 0);
 	scene.add( newMesh );
 
-	// Example #2 - Sphere subtract Cube
-	var newBSP = sphereBSP.subtract( cubeBSP );
+	var newBSP = cubeBSP.subtract( smallCubeBSP );
 	var newMesh = newBSP.toMesh( materialNormal );
 	newMesh.position.set(180, 60, 0);
 	scene.add( newMesh );
 
+	// Example #2 - Sphere subtract Cube
+	// var newBSP = sphereBSP.subtract( cubeBSP );
+	// var newMesh = newBSP.toMesh( materialNormal );
+	// newMesh.position.set(180, 60, 0);
+	// scene.add( newMesh );
+
 	// Example #3 - Cube union Sphere
-	var newBSP = sphereBSP.union( cubeBSP );
-	var newMesh = newBSP.toMesh( materialNormal );
-	newMesh.position.set(70, 60, -120);
-	scene.add( newMesh );
+	// var newBSP = sphereBSP.union( cubeBSP );
+	// var newMesh = newBSP.toMesh( materialNormal );
+	// newMesh.position.set(70, 60, -120);
+	// scene.add( newMesh );
 
 	// Example #4 - Cube intersect Sphere
-	var newBSP = sphereBSP.intersect( cubeBSP );
-	var newMesh = newBSP.toMesh( materialNormal );
-	newMesh.position.set(-70, 60, -120);
-	scene.add( newMesh );
+	// var newBSP = sphereBSP.intersect( cubeBSP );
+	// var newMesh = newBSP.toMesh( materialNormal );
+	// newMesh.position.set(-70, 60, -120);
+	// scene.add( newMesh );
 }
 
 function animate()
