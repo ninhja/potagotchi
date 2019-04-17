@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<title>Shapes 2</title>
+		<style>
+			@font-face {
+				font-family: 'inconsolata';
+				src: url('files/inconsolata.woff') format('woff');
+				font-weight: normal;
+				font-style: normal;
+			}
+
+			body {
+				margin:0;
+				font-family: 'inconsolata';
+				font-size: 15px;
+				line-height: 18px;
+				overflow: hidden;
+			}
+
+			canvas { width: 100%; height: 100% }
+
+		</style>
+	</head>
+	<body>
+
+		<script src="build/three.js"></script>
+		<script src='examples/js/libs/dat.gui.min.js'></script>
+		<script src="examples/js/controls/OrbitControls.js"></script>
+
+		<script>
+
+			var gui, scene, camera, renderer, orbit, lights;
+			var mesh, bones, skeletonHelper;
+
+			function init() {
+
+				// SCENE
+				scene = new THREE.Scene();
+
+				// CAMERA
+				var SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight;
+				var VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000;
+				camera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR );
+				camera.position.set(0,30,30);
+				scene.add( camera );
+
+				// RENDERER
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+				document.body.appendChild( renderer.domElement );
+
+				// ORBIT CONTROLS
+				orbit = new THREE.OrbitControls( camera, renderer.domElement );
+				// orbit.enableZoom = true;
+
+				// LIGHTS
+				var light = new THREE.PointLight( 0xffffff, 1, 0 );
+				light.position.set( -100, 150, 100 );
+				scene.add( light );
+
+				var lightbulbGeometry = new THREE.SphereGeometry( 7, 16, 8 );
+				var lightbulbMaterial = new THREE.MeshBasicMaterial( { color: 0xffff44, blending: THREE.AdditiveBlending } );
+				var lightbulb = new THREE.Mesh( lightbulbGeometry, lightbulbMaterial );
+				// lightbulb.position.set( -15, 10, 60 );
+				lightbulb.position.set( -0, 0, 60 );
+				scene.add(lightbulb);
+
+				// FLOOR
+				// var floorTexture = new THREE.ImageUtils.loadTexture( 'images/checkerboard.jpg' );
+				// floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
+				// floorTexture.repeat.set( 10, 10 );
+				// var floorMaterial = new THREE.MeshBasicMaterial( { map: floorTexture, side: THREE.DoubleSide } );
+				var floorMaterial = new THREE.MeshBasicMaterial( { color: 0x1bba3e, side: THREE.DoubleSide } );
+				var floorGeometry = new THREE.CircleGeometry(50, 64, 10, 10);
+				var floor = new THREE.Mesh(floorGeometry, floorMaterial);
+				floor.position.y = -0.5;
+				// floor.rotation.x = Math.PI / 2;
+				floor.position.z = -0.5;
+				scene.add(floor);
+
+				// SKYBOX/FOG
+				var skyBoxGeometry = new THREE.BoxGeometry( 1000, 1000, 1000 );
+				var skyBoxMaterial = new THREE.MeshBasicMaterial( { color: 0x75baff, transparent: true,  opacity: 0.7, side: THREE.BackSide } );
+				var skyBox = new THREE.Mesh( skyBoxGeometry, skyBoxMaterial );
+				scene.add(skyBox);
+				scene.fog = new THREE.FogExp2( 0x75baff, 0.002 );
+
+
+				// RESIZE WINDOW
+				window.addEventListener( 'resize', function () {
+					camera.aspect = window.innerWidth / window.innerHeight;
+					camera.updateProjectionMatrix();
+					renderer.setSize( window.innerWidth, window.innerHeight );
+				}, false );
+
+				// GUI
+				gui = new dat.GUI();
+				setupDatGui();
+
+				// CREATE GEOMETRIES
+				createGeometry()
+
+			}
+
+			function createGeometry() {
+
+				// var geometry = new THREE.CylinderBufferGeometry(
+				// 	5, // radiusTop
+				// 	5, // radiusBottom
+				// 	sizing.height, // height
+				// 	8, // radiusSegments
+				// 	sizing.segmentCount * 3, // heightSegments
+				// 	true // openEnded
+				// );
+
+				var geometry = new THREE.BoxGeometry( 5, 5, 5 );
+				var material = new THREE.MeshPhongMaterial( { color:0xff0000, transparent:true, opacity:1 } );
+				var cube = new THREE.Mesh( geometry, material );
+				cube.position.set(0,0,2.5);
+				scene.add(cube);
+
+			}
+
+			function setupDatGui() {
+
+				var folder = gui.addFolder( "potagotchi" );
+
+			}
+			function animate() {
+
+				requestAnimationFrame( animate );
+				renderer.render( scene, camera );
+
+			}
+
+			init();
+			animate();
+
+		</script>
+	</body>
+</html>
