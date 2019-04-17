@@ -25,11 +25,7 @@
 <link rel=stylesheet href="css/jquery-ui.css" />
 <link rel=stylesheet href="css/info.css"/>
 <script src="js/info.js"></script>
-<div id="infoButton"></div>
-<div id="infoBox" title="Demo Information">
-This three.js demo is part of a collection at
-<a href="http://stemkoski.github.io/Three.js/">http://stemkoski.github.io/Three.js/</a>
-</div>
+
 <!-- ------------------------------------------------------------ -->
 
 <div id="ThreeJS" style="position: absolute; left:0px; top:0px"></div>
@@ -122,15 +118,34 @@ function init()
 	var smallCubeBSP = new ThreeBSP( smallCubeMesh );
 
 	// Example #1 - Cube subtract Sphere
-	var newBSP = cubeBSP.subtract( sphereBSP );
-	var newMesh = newBSP.toMesh( materialNormal );
-	newMesh.position.set(-180, 60, 0);
-	scene.add( newMesh );
+	// var newBSP = cubeBSP.subtract( sphereBSP );
+	// var newMesh = newBSP.toMesh( materialNormal );
+	// newMesh.position.set(-180, 60, 0);
+	// scene.add( newMesh );
 
+	// hollow cube
 	var newBSP = cubeBSP.subtract( smallCubeBSP );
 	var newMesh = newBSP.toMesh( materialNormal );
 	newMesh.position.set(180, 60, 0);
 	scene.add( newMesh );
+
+	// trying out grouping
+	var geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
+	var material = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
+
+	var cubeA = new THREE.Mesh( geometry, material );
+	cubeA.position.set( 100, 100, 0 );
+
+	var cubeB = new THREE.Mesh( geometry, material );
+	cubeB.position.set( -100, -100, 0 );
+
+	//create a group and add the two cubes
+	//These cubes can now be rotated / scaled etc as a group
+	// var group = new THREE.Group();
+	// group.add( cubeA );
+	// group.add( cubeB );
+	//
+	// scene.add( group );
 
 	// Example #2 - Sphere subtract Cube
 	// var newBSP = sphereBSP.subtract( cubeBSP );
