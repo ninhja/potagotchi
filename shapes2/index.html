@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<title>Shapes 2</title>
+		<title>Pot Shapes</title>
 		<style>
 			@font-face {
 				font-family: 'inconsolata';
@@ -62,7 +62,7 @@
 				light.position.set( -100, 150, 100 );
 				scene.add( light );
 
-				var lightbulbGeometry = new THREE.SphereGeometry( 7, 16, 8 );
+				var lightbulbGeometry = new THREE.SphereGeometry( 7, 16, 16 );
 				var lightbulbMaterial = new THREE.MeshBasicMaterial( { color: 0xffff44, blending: THREE.AdditiveBlending } );
 				var lightbulb = new THREE.Mesh( lightbulbGeometry, lightbulbMaterial );
 				// lightbulb.position.set( -15, 10, 60 );
@@ -84,10 +84,10 @@
 
 				// SKYBOX/FOG
 				var skyBoxGeometry = new THREE.BoxGeometry( 1000, 1000, 1000 );
-				var skyBoxMaterial = new THREE.MeshBasicMaterial( { color: 0x75baff, transparent: true,  opacity: 0.7, side: THREE.BackSide } );
+				var skyBoxMaterial = new THREE.MeshBasicMaterial( { color: 0x9999ff, transparent: true,  opacity: 0.3, side: THREE.BackSide } );
 				var skyBox = new THREE.Mesh( skyBoxGeometry, skyBoxMaterial );
 				scene.add(skyBox);
-				scene.fog = new THREE.FogExp2( 0x75baff, 0.002 );
+				scene.fog = new THREE.FogExp2( 0x75baff, 0.005 );
 
 
 				// RESIZE WINDOW
@@ -117,12 +117,59 @@
 				// 	true // openEnded
 				// );
 
-				var geometry = new THREE.BoxGeometry( 5, 5, 5 );
-				var material = new THREE.MeshPhongMaterial( { color:0xff0000, transparent:true, opacity:1 } );
-				var cube = new THREE.Mesh( geometry, material );
-				cube.position.set(0,0,2.5);
-				scene.add(cube);
 
+				var geometry = new THREE.BoxGeometry( 5, 5, 5 );
+				var material = new THREE.MeshPhongMaterial( {color: 0x00ff00} );
+
+				var cubeA = new THREE.Mesh( geometry, material );
+				cubeA.position.set( 0, 0, 2.5 );
+
+
+				var cubeB = new THREE.Mesh( geometry, material );
+				// cubeB.position.set( 2.5, 2.5, 2.5 );
+				addGeo(cubeA, cubeB);
+
+				// cubeB.position.set(getRandomInt(cubeA.position.x, cubeA.geometry.parameters.width), 0, 0);
+				// // root.add(child);
+				// scene.add(cubeB);
+				scene.add(cubeA);
+
+				//create a group and add the two cubes
+				//These cubes can now be rotated / scaled etc as a group
+				// var group = new THREE.Group();
+				// group.add( cubeA );
+				// group.add( cubeB );
+				//
+				// scene.add( group );
+				// group.position.set(40, 0, 0)
+				//
+				// group.rotateOnAxis(new THREE.Vector3(1,0,0), 40.0)
+
+			}
+
+			function addGeo(root, child) {
+				// position the child, add it to root
+				child.position.set(getRandomInt(root.position.x, root.geometry.parameters.width), 0, 0);
+				// root.add(child);
+				scene.add(child);
+			}
+
+			// function getRandomInt(min, max) {
+		  //   min = Math.ceil(min);
+		  //   max = Math.floor(max);
+		  //   return Math.floor(Math.random() * (max - min + 1)) + min;
+			// }
+
+			// position (x), length of geometry
+			function getRandomInt(pos, dim) {
+				var diff = dim / 3; // add 1 if inclusive
+				var min = pos - (dim / 2);
+				var max = pos + (dim / 6);
+				var n = Math.floor((Math.random() * (max - diff)) +1);
+				if ((n >= pos - (dim / 6)) && (n <= pos + (dim / 6))) {
+					n += diff;
+				}
+				return n;
 			}
 
 			function setupDatGui() {
