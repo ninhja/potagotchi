@@ -3,6 +3,7 @@
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link rel=stylesheet href="css/base.css"/>
 		<title>Pot Shapes</title>
 		<style>
 			@font-face {
@@ -17,7 +18,16 @@
 				font-family: 'inconsolata';
 				font-size: 15px;
 				line-height: 18px;
+				background-color: #ffffff;
+				margin: 0px;
 				overflow: hidden;
+			}
+
+			.text-label {
+			  color: #fff;
+			  font-family: 'inconsolata';
+			  margin: -5px 0 0 15px;
+			  pointer-events:none;
 			}
 
 			canvas { width: 100%; height: 100% }
@@ -102,63 +112,38 @@
 				setupDatGui();
 
 				// CREATE GEOMETRIES
-				createGeometry()
+				createRoot()
 
 			}
 
-			function createGeometry() {
-
-				// var geometry = new THREE.CylinderBufferGeometry(
-				// 	5, // radiusTop
-				// 	5, // radiusBottom
-				// 	sizing.height, // height
-				// 	8, // radiusSegments
-				// 	sizing.segmentCount * 3, // heightSegments
-				// 	true // openEnded
-				// );
-
-
+			// creates the root of the pot (the base shape)
+			function createRoot() {
 				var geometry = new THREE.BoxGeometry( 5, 5, 5 );
 				var material = new THREE.MeshPhongMaterial( {color: 0x00ff00} );
 
 				var cubeA = new THREE.Mesh( geometry, material );
 				cubeA.position.set( 0, 0, 2.5 );
-
-
-				var cubeB = new THREE.Mesh( geometry, material );
-				// cubeB.position.set( 2.5, 2.5, 2.5 );
-				addGeo(cubeA, cubeB);
-
-				// cubeB.position.set(getRandomInt(cubeA.position.x, cubeA.geometry.parameters.width), 0, 0);
-				// // root.add(child);
-				// scene.add(cubeB);
 				scene.add(cubeA);
 
-				//create a group and add the two cubes
-				//These cubes can now be rotated / scaled etc as a group
-				// var group = new THREE.Group();
-				// group.add( cubeA );
-				// group.add( cubeB );
-				//
-				// scene.add( group );
-				// group.position.set(40, 0, 0)
-				//
-				// group.rotateOnAxis(new THREE.Vector3(1,0,0), 40.0)
-
+				createChild(cubeA, geometry, material);
+				cubeA.position.set( 10, 10, 2.5 );
+				scene.add(cubeA);
+				createChild(cubeA, geometry, material);
 			}
 
-			function addGeo(root, child) {
-				// position the child, add it to root
+			// creates the child shape to add to its parent
+			function createChild(root, geometry, material) {
+				var child = new THREE.Mesh( geometry, material );
+				// position the child so that it overlaps with its parent
 				child.position.set(getRandomInt(root.position.x, root.geometry.parameters.width), 0, 0);
-				// root.add(child);
+				addChild(root, child);
+			}
+
+			// adds the child shape to its parent, then adds child to scene
+			function addChild(root, child) {
+				root.add(child);
 				scene.add(child);
 			}
-
-			// function getRandomInt(min, max) {
-		  //   min = Math.ceil(min);
-		  //   max = Math.floor(max);
-		  //   return Math.floor(Math.random() * (max - min + 1)) + min;
-			// }
 
 			// position (x), length of geometry
 			function getRandomInt(pos, dim) {
