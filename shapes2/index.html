@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<link rel=stylesheet href="css/base.css"/>
+		<!-- <link rel=stylesheet href="css/base.css"/> -->
 		<title>Pot Shapes</title>
 		<style>
 			@font-face {
@@ -16,21 +16,18 @@
 			body {
 				margin:0;
 				font-family: 'inconsolata';
-				font-size: 15px;
+				font-size: 18px;
 				line-height: 18px;
 				background-color: #ffffff;
 				margin: 0px;
 				overflow: hidden;
 			}
 
-			.text-label {
-			  color: #fff;
-			  font-family: 'inconsolata';
-			  margin: -5px 0 0 15px;
-			  pointer-events:none;
-			}
-
-			canvas { width: 100%; height: 100% }
+			canvas {
+				width: 100%;
+				height: 100%;
+				background-color: #FA8072;
+		 }
 
 		</style>
 	</head>
@@ -42,8 +39,15 @@
 
 		<script>
 
-			var gui, scene, camera, renderer, orbit, lights;
-			var mesh, bones, skeletonHelper;
+			// Global control variables
+			var gui, scene, camera, renderer, controls, lights;
+
+			// Planter variables
+			var root; // the base Object3D shape of the planter.
+			var geometry; // the geometry of the root and its children:
+										//{BoxGeometry, CylinderGeometry, SphereGeometry, etc.}
+			var geomType; // a String that tells you the type of geometry
+			var material = new THREE.MeshLambertMaterial( {color: 0x69ff00} ); //0x69ff00 0x47ff00
 
 			function init() {
 
@@ -54,51 +58,65 @@
 				var SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight;
 				var VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000;
 				camera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR );
-				camera.position.set(0,30,30);
+				camera.position.set(180, 150, 0 );
 				scene.add( camera );
 
 				// RENDERER
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
 				document.body.appendChild( renderer.domElement );
 
 				// ORBIT CONTROLS
-				orbit = new THREE.OrbitControls( camera, renderer.domElement );
-				// orbit.enableZoom = true;
+				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls.target.set( 0, 0, 0 );
+				controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+				controls.dampingFactor = 0.35;
+				controls.screenSpacePanning = false;
+				controls.maxDistance = 500;
+				controls.maxPolarAngle = Math.PI / 2;
+
+				// AXES HELPER
+				// The X axis is red. The Y axis is green. The Z axis is blue.
+				var axes = new THREE.AxesHelper(400);
+				scene.add(axes);
 
 				// LIGHTS
 				var light = new THREE.PointLight( 0xffffff, 1, 0 );
-				light.position.set( -100, 150, 100 );
+				light.position.set( 0, 80, 40 );
+				light.castShadow = true;
+				light.shadow.radius = 8;
 				scene.add( light );
+				scene.add( new THREE.AmbientLight( 0xffffff, 0.8 ) ); // I add AmbientLight to lighten the shadows
 
-				var lightbulbGeometry = new THREE.SphereGeometry( 7, 16, 16 );
-				var lightbulbMaterial = new THREE.MeshBasicMaterial( { color: 0xffff44, blending: THREE.AdditiveBlending } );
-				var lightbulb = new THREE.Mesh( lightbulbGeometry, lightbulbMaterial );
+				// SUN
+				var sunGeometry = new THREE.SphereGeometry( 7, 16, 16 );
+				var sunMaterial = new THREE.MeshBasicMaterial( { color: 0xffd600 } );
+				var sun = new THREE.Mesh( sunGeometry, sunMaterial );
 				// lightbulb.position.set( -15, 10, 60 );
-				lightbulb.position.set( -0, 0, 60 );
-				scene.add(lightbulb);
+				sun.position.set( 0, 80, 40 );
+				scene.add(sun);
 
 				// FLOOR
 				// var floorTexture = new THREE.ImageUtils.loadTexture( 'images/checkerboard.jpg' );
 				// floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
 				// floorTexture.repeat.set( 10, 10 );
 				// var floorMaterial = new THREE.MeshBasicMaterial( { map: floorTexture, side: THREE.DoubleSide } );
-				var floorMaterial = new THREE.MeshBasicMaterial( { color: 0x1bba3e, side: THREE.DoubleSide } );
-				var floorGeometry = new THREE.CircleGeometry(50, 64, 10, 10);
+				var floorMaterial = new THREE.MeshLambertMaterial( { color: 0x40C90B } );
+				var floorGeometry = new THREE.CylinderGeometry(50, 50, 2, 64, 64);
 				var floor = new THREE.Mesh(floorGeometry, floorMaterial);
-				floor.position.y = -0.5;
-				// floor.rotation.x = Math.PI / 2;
-				floor.position.z = -0.5;
+				floor.position.y = -6;
+				floor.receiveShadow = true;
 				scene.add(floor);
 
-				// SKYBOX/FOG
-				var skyBoxGeometry = new THREE.BoxGeometry( 1000, 1000, 1000 );
-				var skyBoxMaterial = new THREE.MeshBasicMaterial( { color: 0x9999ff, transparent: true,  opacity: 0.3, side: THREE.BackSide } );
+				// SKYBOX/FOG 	#FA8072
+				var skyBoxGeometry = new THREE.BoxGeometry( 800, 800, 800 );
+				var skyBoxMaterial = new THREE.MeshBasicMaterial( { color: 0xa7d3ff, side: THREE.BackSide } );
 				var skyBox = new THREE.Mesh( skyBoxGeometry, skyBoxMaterial );
 				scene.add(skyBox);
-				scene.fog = new THREE.FogExp2( 0x75baff, 0.005 );
-
+				// scene.fog = new THREE.FogExp2( 0x75baff, 0.007 );
 
 				// RESIZE WINDOW
 				window.addEventListener( 'resize', function () {
@@ -108,41 +126,64 @@
 				}, false );
 
 				// GUI
-				gui = new dat.GUI();
 				setupDatGui();
-
-				// CREATE GEOMETRIES
-				createRoot()
 
 			}
 
 			// creates the root of the pot (the base shape)
-			function createRoot() {
-				var geometry = new THREE.BoxGeometry( 5, 5, 5 );
-				var material = new THREE.MeshPhongMaterial( {color: 0x00ff00} );
+			// args: geom (type = String) is the seed shape that the user specified in gui.
+			function createRoot( geom ) {
+				geomType = geom;
 
-				var cubeA = new THREE.Mesh( geometry, material );
-				cubeA.position.set( 0, 0, 2.5 );
-				scene.add(cubeA);
+				// choose the type of geometry, based on what the user specified in gui
+				geometry = (function(geomType) {
+					switch(geomType) {
+						case 'cube':
+							return new THREE.BoxGeometry( 10, 10, 10 );
+						case 'cylinder':
+							return new THREE.CylinderGeometry( 10, 10, 10, 32, 32 );
+						case 'sphere':
+							return new THREE.SphereGeometry( 10, 32, 32);
+					}
+				})(geomType);
 
-				createChild(cubeA, geometry, material);
-				cubeA.position.set( 10, 10, 2.5 );
-				scene.add(cubeA);
-				createChild(cubeA, geometry, material);
+				// create the root object. This will be the base of the planter.
+				root = new THREE.Mesh( geometry, material );
+				root.position.set( 0, 0, 0 );
+				root.castShadow = true; //default is false
+				root.receiveShadow = false; //default
+				scene.add(root);
 			}
 
-			// creates the child shape to add to its parent
-			function createChild(root, geometry, material) {
+			// creates the child shape to add to its parent shape
+			function createChild(parent) {
 				var child = new THREE.Mesh( geometry, material );
-				// position the child so that it overlaps with its parent
-				child.position.set(getRandomInt(root.position.x, root.geometry.parameters.width), 0, 0);
-				addChild(root, child);
+
+				// find the size of the geometry.
+				// the size depends on the type of geometry.
+				var size = (function(geomType) {
+				  switch(geomType) {
+				    case 'cube':
+				      return parent.geometry.parameters.width;
+				    case 'cylinder':
+				      return parent.geometry.parameters.radiusTop;
+				    case 'sphere':
+				      return parent.geometry.parameters.radius;
+				  }
+				})(geomType);
+
+				// position the child in a random so that it overlaps with its parent.
+				child.position.set(getRandomInt(parent.position.x, size),
+													 getRandomInt(parent.position.y, size),
+													 getRandomInt(parent.position.z, size));
+				child.castShadow = true; //default is false
+				child.receiveShadow = false; //default
+				addChild(parent, child);
 			}
 
 			// adds the child shape to its parent, then adds child to scene
-			function addChild(root, child) {
-				root.add(child);
-				scene.add(child);
+			function addChild(parent, child) {
+				parent.add(child);
 			}
 
 			// position (x), length of geometry
@@ -158,15 +199,57 @@
 			}
 
 			function setupDatGui() {
+				gui = new dat.GUI({name: 'My GUI'});
 
-				var folder = gui.addFolder( "potagotchi" );
+				// Options to be added to the GUI
+				var options = {
+				  seedShape: 'cube',
+					createRoot: function() {
+						if (root != null) {
+							alert("You already have a planter growing! Uproot it to plant a new one.");
+						} else {
+							createRoot(options.seedShape);
+						}
+				  },
+				  addChild: function() {
+						if (root == null) {
+							alert("Plant your seed first!");
+						} else {
+							createChild(root);
+						}
+				  },
+					uprootPlanter: function() {
+						scene.remove(root);
+						root = null;
+					}
+				};
 
+				// DAT.GUI Related Stuff
+				// var seeds = gui.addFolder('Seed Shape');
+				// seeds.add(options.seeds, 'cube').listen();
+				// seeds.add(options.seeds, 'sphere').listen();
+				// seeds.add(options.seeds, 'cylinder').listen();
+				// seeds.open();
+
+				var seedShape = gui.add(options, 'seedShape', [ 'cube', 'cylinder', 'sphere' ] ).name('Seed shape');
+
+				gui.add(options, 'createRoot').name('Plant a new seed');
+				gui.add(options, 'addChild').name('Grow planter');
+				gui.add(options, 'uprootPlanter').name('Uproot planter');
 			}
+
 			function animate() {
-
 				requestAnimationFrame( animate );
-				renderer.render( scene, camera );
+				controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
+				render();
+			}
 
+			function render() {
+				renderer.render( scene, camera );
+			}
+
+			function alertMessage( message ) {
+				alert( message );
 			}
 
 			init();
