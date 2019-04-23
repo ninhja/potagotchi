@@ -36,7 +36,7 @@
 		<script src="build/three.js"></script>
 		<script src='examples/js/libs/dat.gui.min.js'></script>
 		<script src="examples/js/controls/OrbitControls.js"></script>
-
+		<script src="ThreeCSG.js"></script>
 		<script>
 
 			// Global control variables
@@ -156,30 +156,20 @@
 				root.position.set( 0, 0, 0 );
 				root.castShadow = true; //default is false
 				root.receiveShadow = false; //default
-				scene.add(root);
+				// scene.add(root);
+
+				shell(root, 0.5);
 			}
 
 			// creates the child shape to add to its parent shape
 			function createChild(parent) {
 				var child = new THREE.Mesh( geometry, material );
-
-				// find the size of the geometry.
-				// the size depends on the type of geometry.
-				var size = (function(geomType) {
-				  switch(geomType) {
-				    case 'cube':
-				      return parent.geometry.parameters.width;
-				    case 'cylinder':
-				      return parent.geometry.parameters.radiusTop;
-				    case 'sphere':
-				      return parent.geometry.parameters.radius;
-				  }
-				})(geomType);
+				var parentSize = getSize(parent);
 
 				// position the child in a random so that it overlaps with its parent.
-				child.position.set(getRandomInt(parent.position.x, size),
-													 getRandomInt(parent.position.y, size),
-													 getRandomInt(parent.position.z, size));
+				child.position.set(getRandomInt(parent.position.x, parentSize),
+													 getRandomInt(parent.position.y, parentSize),
+													 getRandomInt(parent.position.z, parentSize));
 				child.castShadow = true; //default is false
 				child.receiveShadow = false; //default
 				addChild(parent, child);
@@ -188,6 +178,56 @@
 			// adds the child shape to its parent, then adds child to scene
 			function addChild(parent, child) {
 				parent.add(child);
+			}
+
+			function shell(object, wallThickness) {
+				var outerSize = getSize(object);
+				var innerObject = (function(geomType) {
+					var innerSize;
+					switch(geomType) {
+						case 'cube':
+							innerSize = outerSize - (2 * wallThickness)
+							return new THREE.BoxGeometry( innerSize, innerSize, innerSize );
+						case 'cylinder':
+							innerSize = outerSize - wallThickness
+							return new THREE.CylinderGeometry( innerSize, innerSize, innerSize, 32, 32 );
+						case 'sphere':
+							innerSize = outerSize - wallThickness
+							return new THREE.SphereGeometry( innerSize, 32, 32);
+					}
+				})(geomType);
+
+				var outerMesh = new THREE.Mesh(object.geometry);
+				var outerBSP = new ThreeBSP(outerMesh);
+
+				var innerMesh = new THREE.Mesh(innerObject);
+				var innerBSP = new ThreeBSP(innerMesh);
+
+				var objectX = object.position.x;
+				var objectY = object.position.y;
+				var objectZ = object.position.z;
+				innerMesh.position.set(objectX, objectY + wallThickness, objectZ);
+
+				var shelledBSP = outerBSP.subtract(innerBSP);
+				var shelledMesh = shelledBSP.toMesh(material);
+
+				shelledMesh.position.x = 10;
+				scene.add(shelledMesh);
+				// alert(getSize(shelledMesh));
+				// return shelledMesh
+			}
+
+			// helper function for creating a new object.
+			// turns the solid geometry into a shell, with specified wall thickness
+			function getSize(object) {
+				switch(geomType) {
+					case 'cube':
+						return object.geometry.parameters.width;
+					case 'cylinder':
+						return object.geometry.parameters.radiusTop;
+					case 'sphere':
+						return object.geometry.parameters.radius;
+				}
 			}
 
 			// position (x), length of geometry
