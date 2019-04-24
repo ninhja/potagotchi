@@ -36,6 +36,7 @@
 		<script src="build/three.js"></script>
 		<script src='examples/js/libs/dat.gui.min.js'></script>
 		<script src="examples/js/controls/OrbitControls.js"></script>
+		<script src="examples/js/exporters/STLExporter.js"></script>
 		<script src="ThreeCSG.js"></script>
 		<script>
 
@@ -53,6 +54,9 @@
 
 				// SCENE
 				scene = new THREE.Scene();
+
+				// exporter
+				exporter = new THREE.STLExporter();
 
 				// CAMERA
 				var SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight;
@@ -241,6 +245,25 @@
 				return n;
 			}
 
+			function exportSTL(mesh) {
+				var result = exporter.parse( mesh );
+		    saveString( result, 'pot.stl' );
+			}
+
+			var link = document.createElement( 'a' );
+			link.style.display = 'none';
+			document.body.appendChild( link );
+
+			function save( blob, filename ) {
+				link.href = URL.createObjectURL( blob );
+				link.download = filename;
+				link.click();
+			}
+
+			function saveString( text, filename ) {
+				save( new Blob( [ text ], { type: 'text/plain' } ), filename );
+			}
+
 			function setupDatGui() {
 				gui = new dat.GUI({name: 'My GUI'});
 
@@ -264,6 +287,13 @@
 					uprootPlanter: function() {
 						scene.remove(root);
 						root = null;
+					},
+					exportSTL: function() {
+						if (root == null) {
+							alert("Plant your seed first!");
+						} else {
+							exportSTL(root);
+						}
 					}
 				};
 
@@ -279,6 +309,7 @@
 				gui.add(options, 'createRoot').name('Plant a new seed');
 				gui.add(options, 'addChild').name('Grow planter');
 				gui.add(options, 'uprootPlanter').name('Uproot planter');
+				gui.add(options, 'exportSTL').name('Print')
 			}
 
 			function animate() {
