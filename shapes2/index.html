@@ -156,9 +156,9 @@
 				root.position.set( 0, 0, 0 );
 				root.castShadow = true; //default is false
 				root.receiveShadow = false; //default
-				// scene.add(root);
+				scene.add(root);
 
-				shell(root, 0.5);
+				// shell(root, 2);
 			}
 
 			// creates the child shape to add to its parent shape
@@ -173,6 +173,7 @@
 				child.castShadow = true; //default is false
 				child.receiveShadow = false; //default
 				addChild(parent, child);
+				// shell(child, 2);
 			}
 
 			// adds the child shape to its parent, then adds child to scene
@@ -211,9 +212,7 @@
 				var shelledBSP = outerBSP.subtract(innerBSP);
 				var shelledMesh = shelledBSP.toMesh(material);
 
-				shelledMesh.position.x = 10;
 				scene.add(shelledMesh);
-				// alert(getSize(shelledMesh));
 				// return shelledMesh
 			}
 
