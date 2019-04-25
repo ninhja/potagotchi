@@ -15,6 +15,7 @@
 <script src="js/THREEx.KeyboardState.js"></script>
 <script src="js/THREEx.FullScreen.js"></script>
 <script src="js/THREEx.WindowResize.js"></script>
+<script src='js/DAT.GUI.min.js'></script>
 
 <!-- Constructive Solid Geometry library by ChandlerPrall -->
 <script src="js/ThreeCSG.js"></script>
@@ -25,7 +26,11 @@
 <link rel=stylesheet href="css/jquery-ui.css" />
 <link rel=stylesheet href="css/info.css"/>
 <script src="js/info.js"></script>
-
+<div id="infoButton"></div>
+<div id="infoBox" title="Demo Information">
+This three.js demo is part of a collection at
+<a href="http://stemkoski.github.io/Three.js/">http://stemkoski.github.io/Three.js/</a>
+</div>
 <!-- ------------------------------------------------------------ -->
 
 <div id="ThreeJS" style="position: absolute; left:0px; top:0px"></div>
@@ -35,9 +40,7 @@
 	Author: Lee Stemkoski
 	Date: July 2013 (three.js v58)
 */
-
 // MAIN
-
 // standard global variables
 var container, scene, camera, renderer, controls, stats;
 var keyboard = new THREEx.KeyboardState();
@@ -45,9 +48,16 @@ var clock = new THREE.Clock();
 // custom global variables
 var cube;
 
+// Planter variables
+var root; // the base Object3D shape of the planter.
+var geometry; // the geometry of the root and its children:
+							//{BoxGeometry, CylinderGeometry, SphereGeometry, etc.}
+var geomType; // a String that tells you the type of geometry
+var material = new THREE.MeshLambertMaterial( {color: 0x69ff00} ); //0x69ff00 0x47ff00
+
+
 init();
 animate();
-
 // FUNCTIONS
 function init()
 {
@@ -68,6 +78,11 @@ function init()
 	renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 	container = document.getElementById( 'ThreeJS' );
 	container.appendChild( renderer.domElement );
+
+	// SHADOWS
+	// renderer.shadowMap.enabled = true;
+	// renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
+
 	// EVENTS
 	THREEx.WindowResize(renderer, camera);
 	THREEx.FullScreen.bindKey({ charCode : 'm'.charCodeAt(0) });
@@ -79,20 +94,51 @@ function init()
 	stats.domElement.style.bottom = '0px';
 	stats.domElement.style.zIndex = 100;
 	container.appendChild( stats.domElement );
+
+
 	// LIGHT
-	var light = new THREE.PointLight(0xffffff);
-	light.position.set(0,250,0);
-	scene.add(light);
+	// var light = new THREE.PointLight(0xffffff);
+	// light.position.set(0,250,0);
+	// scene.add(light);
+	var light = new THREE.PointLight( 0xffffff, 1, 0 );
+	light.position.set( 0, 80, 40 );
+	// light.castShadow = true;
+	// light.shadow.radius = 8;
+	scene.add( light );
+	// scene.add( new THREE.AmbientLight( 0xffffff, 0.8 ) ); // I add AmbientLight to lighten the shadows
+
+
+
+	// SUN
+	var sunGeometry = new THREE.SphereGeometry( 7, 16, 16 );
+	var innerSunGeometry = new THREE.SphereGeometry( 5, 16, 16 );
+	var sunMaterial = new THREE.MeshBasicMaterial( { color: 0xffee71, transparent: true, opacity: 0.5 } );
+	var innerSunMaterial = new THREE.MeshBasicMaterial( { color: 0xffd600 } );
+	var sun = new THREE.Mesh( sunGeometry, sunMaterial );
+	var innerSun = new THREE.Mesh( innerSunGeometry, innerSunMaterial );
+	sun.position.set( 0, 80, 40 );
+	innerSun.position.set( 0, 80, 40 );
+	scene.add(sun);
+	scene.add(innerSun);
+
+
 	// FLOOR
-	var floorTexture = new THREE.ImageUtils.loadTexture( 'images/grid.jpg' );
-	floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
-	floorTexture.repeat.set( 10, 10 );
-	var floorMaterial = new THREE.MeshBasicMaterial( { map: floorTexture, side: THREE.DoubleSide } );
-	var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 10, 10);
+	// var floorTexture = new THREE.ImageUtils.loadTexture( 'images/checkerboard.jpg' );
+	// floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
+	// floorTexture.repeat.set( 10, 10 );
+	// var floorMaterial = new THREE.MeshBasicMaterial( { map: floorTexture, side: THREE.DoubleSide } );
+	// var floorGeometry = new THREE.PlaneGeometry(1000, 1000, 10, 10);
+	// var floor = new THREE.Mesh(floorGeometry, floorMaterial);
+	// floor.position.y = -0.5;
+	// floor.rotation.x = Math.PI / 2;
+	// scene.add(floor);
+	var floorMaterial = new THREE.MeshLambertMaterial( { color: 0x2DA100 } );
+	var floorGeometry = new THREE.CylinderGeometry(50, 50, 2, 64, 64);
 	var floor = new THREE.Mesh(floorGeometry, floorMaterial);
-	floor.position.y = -0.5;
-	floor.rotation.x = Math.PI / 2;
+	floor.position.y = -6;
+	floor.receiveShadow = true;
 	scene.add(floor);
+
 	// SKYBOX/FOG
 	var skyBoxGeometry = new THREE.CubeGeometry( 10000, 10000, 10000 );
 	var skyBoxMaterial = new THREE.MeshBasicMaterial( { color: 0x9999ff, side: THREE.BackSide } );
@@ -113,66 +159,191 @@ function init()
 	var sphereMesh = new THREE.Mesh( sphereGeometry );
 	var sphereBSP = new ThreeBSP( sphereMesh );
 
-	var smallCubeGeometry = new THREE.CubeGeometry( 90, 100, 90, 1, 1, 1 );
-	var smallCubeMesh = new THREE.Mesh( smallCubeGeometry );
-	var smallCubeBSP = new ThreeBSP( smallCubeMesh );
-
 	// Example #1 - Cube subtract Sphere
-	// var newBSP = cubeBSP.subtract( sphereBSP );
-	// var newMesh = newBSP.toMesh( materialNormal );
-	// newMesh.position.set(-180, 60, 0);
-	// scene.add( newMesh );
-
-	// hollow cube
-	var newBSP = cubeBSP.subtract( smallCubeBSP );
+	var newBSP = cubeBSP.subtract( sphereBSP );
+	var newMesh = newBSP.toMesh( materialNormal );
+	newMesh.position.set(-180, 60, 0);
+	scene.add( newMesh );
+	// Example #2 - Sphere subtract Cube
+	var newBSP = sphereBSP.subtract( cubeBSP );
 	var newMesh = newBSP.toMesh( materialNormal );
 	newMesh.position.set(180, 60, 0);
 	scene.add( newMesh );
 
-	// trying out grouping
-	var geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
-	var material = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
-
-	var cubeA = new THREE.Mesh( geometry, material );
-	cubeA.position.set( 100, 100, 0 );
-
-	var cubeB = new THREE.Mesh( geometry, material );
-	cubeB.position.set( -100, -100, 0 );
-
-	//create a group and add the two cubes
-	//These cubes can now be rotated / scaled etc as a group
-	// var group = new THREE.Group();
-	// group.add( cubeA );
-	// group.add( cubeB );
-	//
-	// scene.add( group );
-
-	// Example #2 - Sphere subtract Cube
-	// var newBSP = sphereBSP.subtract( cubeBSP );
-	// var newMesh = newBSP.toMesh( materialNormal );
-	// newMesh.position.set(180, 60, 0);
-	// scene.add( newMesh );
-
 	// Example #3 - Cube union Sphere
-	// var newBSP = sphereBSP.union( cubeBSP );
-	// var newMesh = newBSP.toMesh( materialNormal );
-	// newMesh.position.set(70, 60, -120);
-	// scene.add( newMesh );
-
+	var newBSP = sphereBSP.union( cubeBSP );
+	var newMesh = newBSP.toMesh( materialNormal );
+	newMesh.position.set(70, 60, -120);
+	scene.add( newMesh );
 	// Example #4 - Cube intersect Sphere
-	// var newBSP = sphereBSP.intersect( cubeBSP );
-	// var newMesh = newBSP.toMesh( materialNormal );
-	// newMesh.position.set(-70, 60, -120);
-	// scene.add( newMesh );
+	var newBSP = sphereBSP.intersect( cubeBSP );
+	var newMesh = newBSP.toMesh( materialNormal );
+	newMesh.position.set(-70, 60, -120);
+	scene.add( newMesh );
+
+	// GUI
+	setupDatGui();
+
 }
+
+/// PLANTER FUNCTIONS
+
+// creates the root of the pot (the base shape)
+// args: geom (type = String) is the seed shape that the user specified in gui.
+function createRoot( geom ) {
+	geomType = geom;
+
+	// choose the type of geometry, based on what the user specified in gui
+	geometry = (function(geomType) {
+		switch(geomType) {
+			case 'cube':
+				return new THREE.CubeGeometry( 10, 10, 10 );
+			case 'cylinder':
+				return new THREE.CylinderGeometry( 10, 10, 10, 32, 32 );
+			case 'sphere':
+				return new THREE.SphereGeometry( 10, 32, 32);
+		}
+	})(geomType);
+
+	// create the root object. This will be the base of the planter.
+	root = new THREE.Mesh( geometry, material );
+	root.position.set( 0, 0, 0 );
+	root.castShadow = true; //default is false
+	root.receiveShadow = false; //default
+	// scene.add(root);
+
+	shell(root, 2);
+}
+
+// creates the child shape to add to its parent shape
+function createChild(parent) {
+	var child = new THREE.Mesh( geometry, material );
+	var parentSize = getSize(parent);
+
+	// position the child in a random so that it overlaps with its parent.
+	child.position.set(getRandomInt(parent.position.x, parentSize),
+										 getRandomInt(parent.position.y, parentSize),
+										 getRandomInt(parent.position.z, parentSize));
+	child.castShadow = true; //default is false
+	child.receiveShadow = false; //default
+	addChild(parent, child);
+	shell(child, 2);
+}
+
+// adds the child shape to its parent, then adds child to scene
+function addChild(parent, child) {
+	parent.add(child);
+}
+
+function shell(object, wallThickness) {
+	var outerSize = getSize(object);
+	var innerObject = (function(geomType) {
+		var innerSize;
+		switch(geomType) {
+			case 'cube':
+				innerSize = outerSize - (2 * wallThickness)
+				return new THREE.BoxGeometry( innerSize, innerSize, innerSize );
+			case 'cylinder':
+				innerSize = outerSize - wallThickness
+				return new THREE.CylinderGeometry( innerSize, innerSize, innerSize, 32, 32 );
+			case 'sphere':
+				innerSize = outerSize - wallThickness
+				return new THREE.SphereGeometry( innerSize, 32, 32);
+		}
+	})(geomType);
+
+	var outerMesh = new THREE.Mesh(object.geometry);
+	var outerBSP = new ThreeBSP(outerMesh);
+
+	var innerMesh = new THREE.Mesh(innerObject);
+	var innerBSP = new ThreeBSP(innerMesh);
+
+	var objectX = object.position.x;
+	var objectY = object.position.y;
+	var objectZ = object.position.z;
+	innerMesh.position.set(objectX, objectY + wallThickness, objectZ);
+
+	var shelledBSP = outerBSP.subtract(outerBSP.intersect(innerBSP));
+	var shelledMesh = shelledBSP.toMesh(material);
+
+	scene.add(shelledMesh);
+	// return shelledMesh
+}
+
+// helper function for creating a new object.
+// turns the solid geometry into a shell, with specified wall thickness
+function getSize(object) {
+	switch(geomType) {
+		case 'cube':
+			return object.geometry.parameters.width;
+		case 'cylinder':
+			return object.geometry.parameters.radiusTop;
+		case 'sphere':
+			return object.geometry.parameters.radius;
+	}
+}
+
+// position (x), length of geometry
+function getRandomInt(pos, dim) {
+	var diff = dim / 3; // add 1 if inclusive
+	var min = pos - (dim / 2);
+	var max = pos + (dim / 6);
+	var n = Math.floor((Math.random() * (max - diff)) +1);
+	if ((n >= pos - (dim / 6)) && (n <= pos + (dim / 6))) {
+		n += diff;
+	}
+	return n;
+}
+
+function setupDatGui() {
+	gui = new dat.GUI({name: 'My GUI'});
+
+	// Options to be added to the GUI
+	var options = {
+		seedShape: 'cube',
+		createRoot: function() {
+			if (root != null) {
+				alert("You already have a planter growing! Uproot it to plant a new one.");
+			} else {
+				createRoot(options.seedShape);
+			}
+		},
+		addChild: function() {
+			if (root == null) {
+				alert("Plant your seed first!");
+			} else {
+				createChild(root);
+			}
+		},
+		uprootPlanter: function() {
+			scene.remove(root);
+			root = null;
+		}
+	};
+
+	// DAT.GUI Related Stuff
+	// var seeds = gui.addFolder('Seed Shape');
+	// seeds.add(options.seeds, 'cube').listen();
+	// seeds.add(options.seeds, 'sphere').listen();
+	// seeds.add(options.seeds, 'cylinder').listen();
+	// seeds.open();
+
+	var seedShape = gui.add(options, 'seedShape', [ 'cube', 'cylinder', 'sphere' ] ).name('Seed shape');
+
+	gui.add(options, 'createRoot').name('Plant a new seed');
+	gui.add(options, 'addChild').name('Grow planter');
+	gui.add(options, 'uprootPlanter').name('Uproot planter');
+}
+
+
+
 
 function animate()
 {
-    requestAnimationFrame( animate );
+  requestAnimationFrame( animate );
 	render();
 	update();
 }
-
 function update()
 {
 	if ( keyboard.pressed("z") )
@@ -183,12 +354,10 @@ function update()
 	controls.update();
 	stats.update();
 }
-
 function render()
 {
 	renderer.render( scene, camera );
 }
-
 </script>
 
 </body>

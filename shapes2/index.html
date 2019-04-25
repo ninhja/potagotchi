@@ -36,8 +36,10 @@
 		<script src="build/three.js"></script>
 		<script src='examples/js/libs/dat.gui.min.js'></script>
 		<script src="examples/js/controls/OrbitControls.js"></script>
-		<script src="ThreeCSG.js"></script>
-		<script>
+		<!-- <script src="ThreeCSG.js"></script> -->
+		<script type="module">
+
+			import CSG from "./CSGMesh.js"
 
 			// Global control variables
 			var gui, scene, camera, renderer, controls, lights;
@@ -132,6 +134,23 @@
 				// GUI
 				setupDatGui();
 
+				var meshA = new THREE.Mesh(new THREE.BoxGeometry(100,100,100), material);
+				var meshB = new THREE.Mesh(new THREE.SphereGeometry(60, 32, 32), material);
+
+				meshB.position.add(new THREE.Vector3( 2, 2, 2));
+				var meshC = doCSG( meshA,meshB, 'subtract',meshA.material);
+				scene.add(meshC);
+
+			}
+
+			function doCSG(a,b,op,mat){
+			   var bspA = CSG.fromMesh( a );
+			   var bspB = CSG.fromMesh( b );
+			   var bspC = bspA[op]( bspB );
+			   var result = CSG.toMesh( bspC, a.matrix );
+			   result.material = mat;
+			   result.castShadow  = result.receiveShadow = true;
+			   return result;
 			}
 
 			// creates the root of the pot (the base shape)
@@ -156,9 +175,9 @@
 				root.position.set( 0, 0, 0 );
 				root.castShadow = true; //default is false
 				root.receiveShadow = false; //default
-				scene.add(root);
 
-				// shell(root, 2);
+				// scene.add(root);
+				shell(root, 2);
 			}
 
 			// creates the child shape to add to its parent shape
@@ -173,7 +192,7 @@
 				child.castShadow = true; //default is false
 				child.receiveShadow = false; //default
 				addChild(parent, child);
-				// shell(child, 2);
+				shell(child, 2);
 			}
 
 			// adds the child shape to its parent, then adds child to scene
@@ -183,7 +202,7 @@
 
 			function shell(object, wallThickness) {
 				var outerSize = getSize(object);
-				var innerObject = (function(geomType) {
+				var innerGeom = (function(geomType) {
 					var innerSize;
 					switch(geomType) {
 						case 'cube':
@@ -197,23 +216,25 @@
 							return new THREE.SphereGeometry( innerSize, 32, 32);
 					}
 				})(geomType);
-
-				var outerMesh = new THREE.Mesh(object.geometry);
-				var outerBSP = new ThreeBSP(outerMesh);
-
-				var innerMesh = new THREE.Mesh(innerObject);
-				var innerBSP = new ThreeBSP(innerMesh);
+				var outerMesh = new THREE.Mesh(object.geometry, material);
+				var innerMesh = new THREE.Mesh(innerGeom, material);
 
 				var objectX = object.position.x;
 				var objectY = object.position.y;
 				var objectZ = object.position.z;
-				innerMesh.position.set(objectX, objectY + wallThickness, objectZ);
+				innerMesh.position.set(objectX, objectY + wallThickness*2, objectZ);
 
-				var shelledBSP = outerBSP.subtract(innerBSP);
-				var shelledMesh = shelledBSP.toMesh(material);
-
+				var shelledMesh = doCSG(outerMesh, innerMesh, 'subtract', outerMesh.material);
+				// scene.add(innerMesh);
+				// scene.add(object);
 				scene.add(shelledMesh);
-				// return shelledMesh
+
+				// var meshA = new THREE.Mesh(new THREE.BoxGeometry(100,100,100), material);
+				// var meshB = new THREE.Mesh(new THREE.SphereGeometry(60, 32, 32), material);
+				//
+				// meshB.position.add(new THREE.Vector3( 2, 2, 2));
+				// var meshC = doCSG( meshA,meshB, 'subtract',meshA.material);
+				// scene.add(meshC);
 			}
 
 			// helper function for creating a new object.
