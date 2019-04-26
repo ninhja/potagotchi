@@ -42,10 +42,8 @@
 
 			import CSG from "./CSGMesh.js"
 
-		<script>=
-
 			// Global control variables
-			var gui, scene, camera, renderer, controls, lights;
+			var gui, scene, camera, renderer, controls, lights, exporter;
 
 			// Planter variables
 			var root; // the base Object3D shape of the planter.
@@ -140,12 +138,12 @@
 				// GUI
 				setupDatGui();
 
-				var meshA = new THREE.Mesh(new THREE.BoxGeometry(100,100,100), material);
-				var meshB = new THREE.Mesh(new THREE.SphereGeometry(60, 32, 32), material);
-
-				meshB.position.add(new THREE.Vector3( 2, 2, 2));
-				var meshC = doCSG( meshA,meshB, 'subtract',meshA.material);
-				scene.add(meshC);
+				// var meshA = new THREE.Mesh(new THREE.BoxGeometry(100,100,100), material);
+				// var meshB = new THREE.Mesh(new THREE.BoxGeometry(60, 60, 200), material);
+				//
+				// meshB.position.add(new THREE.Vector3( 200, 200, 200));
+				// var meshC = doCSG( meshA,meshB, 'union',meshA.material);
+				// scene.add(meshC);
 
 			}
 
@@ -182,8 +180,8 @@
 				root.castShadow = true; //default is false
 				root.receiveShadow = false; //default
 
-				// scene.add(root);
-				shell(root, 2);
+				scene.add(root);
+				// shell(root, 2);
 			}
 
 			// creates the child shape to add to its parent shape
@@ -198,7 +196,7 @@
 				child.castShadow = true; //default is false
 				child.receiveShadow = false; //default
 				addChild(parent, child);
-				shell(child, 2);
+				// shell(child, 2);
 			}
 
 			// adds the child shape to its parent, then adds child to scene
@@ -213,34 +211,31 @@
 					switch(geomType) {
 						case 'cube':
 							innerSize = outerSize - (2 * wallThickness)
-							return new THREE.BoxGeometry( innerSize, innerSize, innerSize );
+							return new THREE.SphereGeometry( innerSize, innerSize, innerSize );
 						case 'cylinder':
 							innerSize = outerSize - wallThickness
-							return new THREE.CylinderGeometry( innerSize, innerSize, innerSize, 32, 32 );
+							return new THREE.SphereGeometry( innerSize, innerSize, innerSize, 32, 32 );
 						case 'sphere':
 							innerSize = outerSize - wallThickness
 							return new THREE.SphereGeometry( innerSize, 32, 32);
 					}
 				})(geomType);
-				var outerMesh = new THREE.Mesh(object.geometry, material);
+				var innerGeom = new THREE.SphereGeometry( outerSize - wallThickness*2, 32, 32);
+				// var outerMesh = new THREE.Mesh(object.geometry, material);
 				var innerMesh = new THREE.Mesh(innerGeom, material);
 
 				var objectX = object.position.x;
 				var objectY = object.position.y;
 				var objectZ = object.position.z;
-				innerMesh.position.set(objectX, objectY + wallThickness*2, objectZ);
+				// innerMesh.position.set(objectX+100, objectY + (wallThickness*2) + 50, objectZ);
+				innerMesh.position.add(new THREE.Vector3( objectX, objectY + wallThickness*2 + 40, objectZ));
 
-				var shelledMesh = doCSG(outerMesh, innerMesh, 'subtract', outerMesh.material);
+				// var shelledMesh = doCSG(innerMesh, object, 'subtract', material);
 				// scene.add(innerMesh);
+				// scene.add(outerMesh);
 				// scene.add(object);
-				scene.add(shelledMesh);
+				// scene.add(shelledMesh);
 
-				// var meshA = new THREE.Mesh(new THREE.BoxGeometry(100,100,100), material);
-				// var meshB = new THREE.Mesh(new THREE.SphereGeometry(60, 32, 32), material);
-				//
-				// meshB.position.add(new THREE.Vector3( 2, 2, 2));
-				// var meshC = doCSG( meshA,meshB, 'subtract',meshA.material);
-				// scene.add(meshC);
 			}
 
 			// helper function for creating a new object.
