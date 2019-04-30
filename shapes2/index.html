@@ -325,18 +325,25 @@
 							alert("You already have a planter growing! Uproot it to plant a new one.");
 						} else {
 							createRoot(options.seedShape);
+							console.log(plantQueue.printPQueue());
 						}
 				  },
 				  addChild: function() {
 						if (root == null) {
 							alert("Plant your seed first!");
 						} else {
-							createChild(root);
+							// nodeToGrow = plantQueue.dequeue();
+							nextNodeToGrow = plantQueue.front().element;
+							if length(nextNodeToGrow.children) > 3:
+								plantQueue.dequeue()
+							createChild(plantQueue.front().element);
+							// plantQueue.enqueue(plantQueue.enqueue());
 						}
 				  },
 					uprootPlanter: function() {
 						scene.remove(root);
 						root = null;
+						plantQueue = new PriorityQueue();
 					},
 					exportSTL: function() {
 						if (root == null) {
