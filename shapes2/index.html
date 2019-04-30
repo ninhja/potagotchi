@@ -335,7 +335,7 @@
 							// nodeToGrow = plantQueue.dequeue();
 							nextNodeToGrow = plantQueue.front().element;
 							if length(nextNodeToGrow.children) > 3:
-								plantQueue.dequeue()
+								plantQueue.dequeue();
 							createChild(plantQueue.front().element);
 							// plantQueue.enqueue(plantQueue.enqueue());
 						}

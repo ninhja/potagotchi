@@ -48,57 +48,52 @@ class PriorityQueue {
     // if the element have the highest priority
     // it is added at the end of the queue
     if (!contain) {
-    this.items.push(qElement);
+      this.items.push(qElement);
     }
     }
 
     // dequeue method to remove
     // element from the queue
-    dequeue()
-    {
+    dequeue() {
     // return the dequeued element
     // and remove it.
     // if the queue is empty
     // returns Underflow
     if (this.isEmpty())
-    return "Underflow";
+      return "Underflow";
     return this.items.shift();
     }
 
     // front function
-    front()
-    {
+    front() {
     // returns the highest priority element
     // in the Priority queue without removing it.
     if (this.isEmpty())
-    return "No elements in Queue";
+      return "No elements in Queue";
     return this.items[0];
     }
 
     // rear function
-    rear()
-    {
+    rear() {
     // returns the lowest priorty
     // element of the queue
     if (this.isEmpty())
-    return "No elements in Queue";
+      return "No elements in Queue";
     return this.items[this.items.length - 1];
     }
 
     // isEmpty function
-    isEmpty()
-    {
-    // return true if the queue is empty.
-    return this.items.length == 0;
+    isEmpty() {
+      // return true if the queue is empty.
+      return this.items.length == 0;
     }
 
     // printQueue function
     // prints all the element of the queue
-    printPQueue()
-    {
+    printPQueue() {
     var str = "";
     for (var i = 0; i < this.items.length; i++)
-    str += this.items[i].element + " ";
+      str += this.items[i].element + " ";
     return str;
     }
 
