@@ -17,6 +17,13 @@ class PriorityQueue {
         this.items = [];
     }
 
+    // functions to be implemented
+    // enqueue(item, priority)
+    // dequeue()
+    // front()
+    // isEmpty()
+    // printPQueue()
+
     // enqueue function to add element
     // to the queue as per priority
     enqueue(element, priority)

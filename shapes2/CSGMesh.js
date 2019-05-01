@@ -1,7 +1,7 @@
 "use strict"
 
 // ## License
-// 
+//
 // Copyright (c) 2011 Evan Wallace (http://madebyevan.com/), under the MIT license.
 // THREE.js rework by thrax
 
@@ -86,9 +86,9 @@ CSG.fromPolygons=function(polygons) {
 // # class Vector
 
 // Represents a 3D vector.
-// 
+//
 // Example usage:
-// 
+//
 //     new CSG.Vector(1, 2, 3);
 //     new CSG.Vector([1, 2, 3]);
 //     new CSG.Vector({ x: 1, y: 2, z: 3 });
@@ -268,7 +268,7 @@ Plane.fromPoints = function(a, b, c) {
 // be coplanar and form a convex loop. They do not have to be `Vertex`
 // instances but they must behave similarly (duck typing can be used for
 // customization).
-// 
+//
 // Each convex polygon has a `shared` property, which is shared between all
 // polygons that are clones of each other or were split from the same polygon.
 // This can be used to define per-polygon properties (such as surface color).
@@ -327,7 +327,7 @@ class Node {
     invert() {
         for (var i = 0; i < this.polygons.length; i++)
             this.polygons[i].flip();
-        
+
         this.plane.flip();
         if (this.front)
             this.front.invert();
@@ -419,18 +419,22 @@ CSG.fromGeometry=function(geom){
     }
     return CSG.fromPolygons(polys)
 }
-
+CSG._tmpm3 = new THREE.Matrix3();
 CSG.fromMesh=function(mesh){
+
     var csg = CSG.fromGeometry(mesh.geometry)
+    CSG._tmpm3.getNormalMatrix(mesh.matrix);
     for(var i=0;i<csg.polygons.length;i++){
         var p = csg.polygons[i]
         for(var j=0;j<p.vertices.length;j++){
             var v=p.vertices[j]
             v.pos.applyMatrix4(mesh.matrix);
+            v.normal.applyMatrix3(CSG._tmpm3);
         }
     }
     return csg;
 }
+
 
 CSG.toMesh=function(csg,toMatrix){
     var geom = new THREE.Geometry();
@@ -442,7 +446,7 @@ CSG.toMesh=function(csg,toMatrix){
         var pvs=p.vertices;
         var v0=vs.length;
         var pvlen=pvs.length
-        
+
         for(var j=0;j<pvlen;j++)
             vs.push(new THREE.Vector3().copy(pvs[j].pos))
 
@@ -513,9 +517,9 @@ CSG.eval=function(tokens,doRemove){//[['add',mesh,mesh,mesh,mesh],['sub',mesh,me
 export default CSG
 // Return a new CSG solid representing space in either this solid or in the
 // solid `csg`. Neither this solid nor the solid `csg` are modified.
-// 
+//
 //     A.union(B)
-// 
+//
 //     +-------+            +-------+
 //     |       |            |       |
 //     |   A   |            |       |
@@ -524,12 +528,12 @@ export default CSG
 //          |   B   |            |       |
 //          |       |            |       |
 //          +-------+            +-------+
-// 
+//
 // Return a new CSG solid representing space in this solid but not in the
 // solid `csg`. Neither this solid nor the solid `csg` are modified.
-// 
+//
 //     A.subtract(B)
-// 
+//
 //     +-------+            +-------+
 //     |       |            |       |
 //     |   A   |            |       |
@@ -538,12 +542,12 @@ export default CSG
 //          |   B   |
 //          |       |
 //          +-------+
-// 
+//
 // Return a new CSG solid representing space both this solid and in the
 // solid `csg`. Neither this solid nor the solid `csg` are modified.
-// 
+//
 //     A.intersect(B)
-// 
+//
 //     +-------+
 //     |       |
 //     |   A   |
@@ -552,4 +556,4 @@ export default CSG
 //          |   B   |
 //          |       |
 //          +-------+
-// 
+//
