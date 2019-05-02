@@ -48,7 +48,7 @@
 			import CSG from "./CSGMesh.js"
 
 			// Global control variables
-			var gui, scene, camera, renderer, controls, exporter;
+			var gui, scene, camera, renderer, controls, exporter, sunControl;
 
 			// light variables
 			var light;
@@ -95,6 +95,8 @@
 				controls.screenSpacePanning = false;
 				controls.maxDistance = 500;
 				controls.maxPolarAngle = Math.PI / 2;
+				controls.update();
+				controls.addEventListener( 'change', render );
 
 				// AXES HELPER
 				// The X axis is red. The Y axis is green. The Z axis is blue.
@@ -117,9 +119,22 @@
 				sun = new THREE.Mesh( sunGeometry, sunMaterial );
 				innerSun = new THREE.Mesh( innerSunGeometry, innerSunMaterial );
 				sun.position.set( 0, 80, 40 );
-				innerSun.position.set( 0, 80, 40 );
 				scene.add(sun);
-				scene.add(innerSun);
+				sun.add(innerSun);
+				sun.add(light);
+
+				// SUN CONTROL (change position of sun by dragging and dropping)
+				sunControl = new THREE.TransformControls( camera, renderer.domElement );
+				sunControl.addEventListener( 'change', render );
+				sunControl.addEventListener( 'dragging-changed', function ( event ) {
+					controls.enabled = ! event.value;
+				} );
+				sunControl.attach( sun );
+				// console.log(sunControl.size);
+				sunControl.setSize( 0.75 );
+				sunControlToggle(false);
+				scene.add( sunControl );
+
 
 				// FLOOR
 				// var floorTexture = new THREE.ImageUtils.loadTexture( 'images/checkerboard.jpg' );
@@ -327,24 +342,6 @@
 				save( new Blob( [ text ], { type: 'text/plain' } ), filename );
 			}
 
-			// SHIFTING SUN POSITION
-			function moveSun(axis, value) {
-				switch(axis) {
-					case 'x':
-					sun.position.x = value;
-					innerSun.position.x = value;
-					light.position.x = value;
-					case 'y':
-					sun.position.y = value;
-					innerSun.position.y = value;
-					light.position.y = value;
-					case 'z':
-					sun.position.z = value;
-					innerSun.position.z = value;
-					light.position.z = value;
-				}
-			}
-
 			// SETTING UP GUI
 
 			function setupDatGui() {
@@ -382,6 +379,7 @@
 						plantQueue.items = []
 					},
 					sunPosition: {
+						moveEnabled: false,
 						sunX: 0,
 						sunY: 80,
 						sunZ: 40
@@ -395,13 +393,6 @@
 					}
 				};
 
-				// DAT.GUI Related Stuff
-				// var seeds = gui.addFolder('Seed Shape');
-				// seeds.add(options.seeds, 'cube').listen();
-				// seeds.add(options.seeds, 'sphere').listen();
-				// seeds.add(options.seeds, 'cylinder').listen();
-				// seeds.open();
-
 				var seedShape = gui.add(options, 'seedShape', [ 'cube', 'cylinder', 'sphere' ] ).name('Seed shape');
 
 				gui.add(options, 'createRoot').name('Plant a new seed');
@@ -409,24 +400,38 @@
 				gui.add(options, 'uprootPlanter').name('Uproot planter');
 				// gui.add(options, 'sunPosition', 0, 360).name('Move sun');
 
-				var sunPosition = gui.addFolder('Sun Position');
-				var controller_sunX = sunPosition.add(options.sunPosition, 'sunX', 0, 150).name('X').listen();
-				controller_sunX.onChange(function(value) {
-					moveSun('x', value);
+				gui.add(options.sunPosition, 'moveEnabled').name('Move sun').onChange(function (value) {
+				  sunControlToggle(value);
 				});
-				var controller_sunY = sunPosition.add(options.sunPosition, 'sunY', 0, 150).name('Y').listen();
-				controller_sunY.onChange(function(value) {
-					moveSun('y', value);
-				});
-				var controller_sunZ = sunPosition.add(options.sunPosition, 'sunZ', -150, 150).name('Z').listen();
-				controller_sunZ.onChange(function(value) {
-					moveSun('z', value);
-				});
-				sunPosition.open();
+
+				// var sunPosition = gui.addFolder('Sun Position');
+				// var controller_moveEnabled = sunPosition.add(options.sunPosition, 'moveEnabled').name('Move sun').listen();
+				// controller_sunX.onChange(function(value) {
+				// 	moveSun('x', value);
+				// });
+				// var controller_sunX = sunPosition.add(options.sunPosition, 'sunX', 0, 150).name('X').listen();
+				// controller_sunX.onChange(function(value) {
+				// 	moveSun('x', value);
+				// });
+				// var controller_sunY = sunPosition.add(options.sunPosition, 'sunY', 0, 150).name('Y').listen();
+				// controller_sunY.onChange(function(value) {
+				// 	moveSun('y', value);
+				// });
+				// var controller_sunZ = sunPosition.add(options.sunPosition, 'sunZ', -150, 150).name('Z').listen();
+				// controller_sunZ.onChange(function(value) {
+				// 	moveSun('z', value);
+				// });
+				// sunPosition.open();
 
 				gui.add(options, 'exportSTL').name('Print');
 
 
+			}
+
+			function sunControlToggle( bool ) {
+				sunControl.showX = bool;
+				sunControl.showY = bool;
+				sunControl.showZ = bool;
 			}
 
 			function animate() {
