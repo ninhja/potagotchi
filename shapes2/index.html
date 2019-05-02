@@ -130,17 +130,12 @@
 					controls.enabled = ! event.value;
 				} );
 				sunControl.attach( sun );
-				// console.log(sunControl.size);
 				sunControl.setSize( 0.75 );
 				sunControlToggle(false);
 				scene.add( sunControl );
 
 
 				// FLOOR
-				// var floorTexture = new THREE.ImageUtils.loadTexture( 'images/checkerboard.jpg' );
-				// floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
-				// floorTexture.repeat.set( 10, 10 );
-				// var floorMaterial = new THREE.MeshBasicMaterial( { map: floorTexture, side: THREE.DoubleSide } );
 				var floorMaterial = new THREE.MeshLambertMaterial( { color: 0x2DA100 } );
 				var floorGeometry = new THREE.CylinderGeometry(70, 70, 2, 64, 64);
 				var floor = new THREE.Mesh(floorGeometry, floorMaterial);
@@ -236,8 +231,7 @@
 
 			function calcPriority(child) {
 				var priority;
-				// distance from child to sun, inverse of
-				// closer it is, higher priority
+				// closer it is, higher in priority queue
 				priority += calcDistance(child, sun);
 				return priority;
 			}
@@ -315,9 +309,9 @@
 				}
 			}
 
-			// position (x), length of geometry
+			// position, length of geometry
 			function getRandomInt(pos, dim) {
-				var diff = dim / 4; // add 1 if inclusive
+				var diff = dim / 4;
 				var min = pos - (dim / 2);
 				var max = pos;
 				// calculate random number from range(min,max)
@@ -340,7 +334,6 @@
 			// chooses random child position from list of all possible positions
 			function getRandomChildPos(positions) {
 				var i = Math.floor((Math.random() * positions.length));
-				//console.log("positions" + positions[i]);
 				return positions[i];
 			}
 
@@ -405,15 +398,7 @@
 						if (root == null) {
 							alert("Plant your seed first!");
 						} else {
-							// nodeToGrow = plantQueue.dequeue();
-							// var nextNodeToGrow = plantQueue.front().element;
-							// while (nextNodeToGrow.children.length > 1) {
-							// 	plantQueue.dequeue();
-							// 	nextNodeToGrow = plantQueue.front().element;
-							// }
-							// createChild(plantQueue.front().element);
 							createChild(plantQueue.dequeue().element);
-							// plantQueue.enqueue(plantQueue.enqueue());
 						}
 				  },
 					uprootPlanter: function() {
@@ -446,25 +431,6 @@
 				gui.add(options.sunPosition, 'moveEnabled').name('Move sun').onChange(function (value) {
 				  sunControlToggle(value);
 				});
-
-				// var sunPosition = gui.addFolder('Sun Position');
-				// var controller_moveEnabled = sunPosition.add(options.sunPosition, 'moveEnabled').name('Move sun').listen();
-				// controller_sunX.onChange(function(value) {
-				// 	moveSun('x', value);
-				// });
-				// var controller_sunX = sunPosition.add(options.sunPosition, 'sunX', 0, 150).name('X').listen();
-				// controller_sunX.onChange(function(value) {
-				// 	moveSun('x', value);
-				// });
-				// var controller_sunY = sunPosition.add(options.sunPosition, 'sunY', 0, 150).name('Y').listen();
-				// controller_sunY.onChange(function(value) {
-				// 	moveSun('y', value);
-				// });
-				// var controller_sunZ = sunPosition.add(options.sunPosition, 'sunZ', -150, 150).name('Z').listen();
-				// controller_sunZ.onChange(function(value) {
-				// 	moveSun('z', value);
-				// });
-				// sunPosition.open();
 
 				gui.add(options, 'exportSTL').name('Print');
 
