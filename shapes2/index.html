@@ -142,7 +142,7 @@
 				// floorTexture.repeat.set( 10, 10 );
 				// var floorMaterial = new THREE.MeshBasicMaterial( { map: floorTexture, side: THREE.DoubleSide } );
 				var floorMaterial = new THREE.MeshLambertMaterial( { color: 0x2DA100 } );
-				var floorGeometry = new THREE.CylinderGeometry(50, 50, 2, 64, 64);
+				var floorGeometry = new THREE.CylinderGeometry(70, 70, 2, 64, 64);
 				var floor = new THREE.Mesh(floorGeometry, floorMaterial);
 				floor.position.y = -6;
 				floor.receiveShadow = true;
@@ -204,8 +204,8 @@
 				root.castShadow = true; //default is false
 				root.receiveShadow = false; //default
 				plantQueue.enqueue(root, calcPriority(root));
-				scene.add(root);
-				// shell(root, 2);
+				// scene.add(root);
+				shell(root, 2);
 			}
 
 			// creates the child shape to add to its parent shape
@@ -226,7 +226,7 @@
 				child.receiveShadow = false; //default
 				addChild(parent, child);
 				plantQueue.enqueue(child, calcPriority(child));
-				// shell(child, 2);
+				shell(child, 2);
 			}
 
 			// adds the child shape to its parent, then adds child to scene
@@ -255,38 +255,53 @@
 
 			function shell(object, wallThickness) {
 				var outerSize = getSize(object);
+				var bottomPlateMesh;
+				var bottomPlateGeom;
+
 				var innerGeom = (function(geomType) {
 					var innerSize;
+					var bottomPlate;
+
 					switch(geomType) {
 						case 'cube':
-							innerSize = outerSize - (2 * wallThickness)
+							innerSize = outerSize - (2 * wallThickness);
+
+							bottomPlateGeom = new THREE.CubeGeometry( outerSize, wallThickness, outerSize );
+							bottomPlateMesh = new THREE.Mesh(bottomPlateGeom, material);
+							bottomPlateMesh.position.set(object.position.x, object.position.y, object.position.z);
+							bottomPlateMesh.position.setY(object.position.y - (outerSize/2) + (wallThickness/2));
+
 							return new THREE.CubeGeometry( innerSize, 50, innerSize );
 						case 'cylinder':
-							innerSize = outerSize - wallThickness
-							return new THREE.CylinderGeometry( innerSize, innerSize, innerSize, 32, 32 );
+							innerSize = outerSize - wallThickness;
+
+							bottomPlateGeom = new THREE.CylinderGeometry( outerSize, outerSize, wallThickness, 32, 32 );
+							bottomPlateMesh = new THREE.Mesh(bottomPlateGeom, material);
+							bottomPlateMesh.position.set(object.position.x, object.position.y, object.position.z);
+							bottomPlateMesh.position.setY(object.position.y - (outerSize/2) + (wallThickness/2));
+
+							return new THREE.CylinderGeometry( innerSize, innerSize, 50, 32, 32 );
 						case 'sphere':
-							innerSize = outerSize - wallThickness
-							return new THREE.SphereGeometry( innerSize, 32, 32);
+							innerSize = outerSize - wallThickness*2;
+
+							bottomPlateGeom = new THREE.CylinderGeometry( innerSize, innerSize, wallThickness, 32, 32)
+							bottomPlateMesh = new THREE.Mesh(bottomPlateGeom, material);
+							bottomPlateMesh.position.set(object.position.x, object.position.y, object.position.z);
+							bottomPlateMesh.position.setY(object.position.y - (outerSize) + (wallThickness*1.5));
+
+							return new THREE.CylinderGeometry( innerSize, innerSize, 50, 32, 32);
 					}
 				})(geomType);
-				// var outerMesh = new THREE.Mesh(object.geometry, material);
-				// var innerMesh = new THREE.Mesh(innerGeom, material);
-				//
-				// var objectX = object.position.x;
-				// var objectY = object.position.y;
-				// var objectZ = object.position.z;
-				// // innerMesh.position.set(objectX+100, objectY + (wallThickness*2) + 50, objectZ);
-				// innerMesh.position.add(new THREE.Vector3( objectX, objectY + wallThickness*2 + 40, objectZ));
-
-				// var shelledMesh = doCSG(innerMesh, object, 'subtract', material);
-				// scene.add(innerMesh);
-				// scene.add(outerMesh);
-				// scene.add(object);
-				// scene.add(shelledMesh);
 
 				var innerMesh = new THREE.Mesh(innerGeom);
 				var shelledMesh = doCSG( object,innerMesh, 'subtract',object.material);
+				shelledMesh.position.setY(20);
+
+
 				scene.add(shelledMesh);
+				shelledMesh.add(bottomPlateMesh);
+				root = shelledMesh;
+
 			}
 
 			// helper function for creating a new object.
@@ -343,7 +358,7 @@
 							var dist = pt.distanceTo(new_pt);
 							if (dist <= (dim / 2)) {
 								solutions.push(new_pt)
-								console.log("x:" + new_pt.x + "y:" + new_pt.y + "z:" + new_pt.z);
+								// console.log("x:" + new_pt.x + "y:" + new_pt.y + "z:" + new_pt.z);
 							}
 						}
 					}
