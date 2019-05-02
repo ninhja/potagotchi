@@ -63,6 +63,7 @@
 			var geomType; // a String that tells you the type of geometry
 			var material = new THREE.MeshLambertMaterial( {color: 0x69ff00} ); //0x69ff00 0x47ff00
 			var plantQueue;
+			var allPots = new THREE.Group();
 
 			function init() {
 
@@ -200,17 +201,20 @@
 				// create the root object. This will be the base of the planter.
 				root = new THREE.Mesh( geometry, material );
 				root.position.set( 0, 0, 0 );
+				allPots.add(root)
 				console.log("root position" + root.position.x + " " + root.position.y + " " + root.position.z);
 				root.castShadow = true; //default is false
 				root.receiveShadow = false; //default
 				plantQueue.enqueue(root, calcPriority(root));
-				scene.add(root);
+				scene.add(allPots)
+				// scene.add(root);
 				// shell(root, 2);
 			}
 
 			// creates the child shape to add to its parent shape
 			function createChild(parent) {
 				var child = new THREE.Mesh( geometry, material );
+				scene.add(child)
 				var parentSize = getSize(parent);
 
 				// position the child in a random so that it overlaps with its parent.
@@ -220,17 +224,20 @@
 				var validPositions = allPossibleChildPositions(parent.position, parentSize);
 				var new_pos = getRandomChildPos(validPositions);
 				child.position.set(new_pos.x, new_pos.y, new_pos.z);
-				console.log("parent position: " + parent.position.x+" "+parent.position.y+" "+parent.position.z + "    parentSize" + parentSize + "    child position" + child.position.x +" "+ child.position.y +" "+ child.position.z);
-				console.log(parentSize);
+				console.log("parent position: " + parent.position.x+" "+parent.position.y+" "+parent.position.z + "    parentSize" + parentSize);
 				child.castShadow = true; //default is false
 				child.receiveShadow = false; //default
-				addChild(parent, child);
+				//addChild(parent, child);
+				//parent.add(child)
+				allPots.add(child)
+				console.log("child position" + child.position.x +" "+ child.position.y +" "+ child.position.z)
 				plantQueue.enqueue(child, calcPriority(child));
 				// shell(child, 2);
 			}
 
 			// adds the child shape to its parent, then adds child to scene
 			function addChild(parent, child) {
+				scene.add(child)
 				parent.add(child);
 			}
 
@@ -335,13 +342,18 @@
 				var solutions = [];
 				var pt = new THREE.Vector3( pos.x, pos.y, pos.z );
 				var x1, y1, z1;
-				for (x1 = pt.x - dim; x1 < pt.x + dim; x1++) {
-					for (y1 = pt.y - dim; y1 < pt.y + dim; y1++) {
-	  				for(z1 = pt.z - dim; z1 < pt.z + dim; z1++) {
+				for (x1 = pt.x - (dim); x1 < pt.x + (dim); x1++) {
+					for (y1 = pt.y - (dim); y1 < pt.y + (dim); y1++) {
+	  				for(z1 = pt.z - (dim); z1 < pt.z + (dim); z1++) {
+							if (y1 < 0) {
+								break;
+							}
 							var new_pt = new THREE.Vector3( x1, y1, z1 );
-							// distance between position and new point
+							// distance between center of shapes
 							var dist = pt.distanceTo(new_pt);
-							if (dist <= (dim / 2)) {
+							// diagonal of cube
+							var diag = dim * Math.sqrt(3);
+							if (dist < diag) {
 								solutions.push(new_pt)
 								console.log("x:" + new_pt.x + "y:" + new_pt.y + "z:" + new_pt.z);
 							}
@@ -350,6 +362,9 @@
 				}
 				return solutions
 			}
+
+			// Get the distance between the center of the cubes,
+			//and see if it is greater than the sum of the half diagonals of the two cubes.
 
 			// 3D PRINTING FUNCTIONS
 
@@ -404,7 +419,10 @@
 						}
 				  },
 					uprootPlanter: function() {
-						scene.remove(root);
+						scene.remove(allPots);
+						// while(scene.children.length > 0){
+    				// 	scene.remove(scene.children[0]);
+						// }
 						root = null;
 						plantQueue.items = []
 					},
