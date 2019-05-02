@@ -295,8 +295,6 @@
 
 				var innerMesh = new THREE.Mesh(innerGeom);
 				var shelledMesh = doCSG( object,innerMesh, 'subtract',object.material);
-				shelledMesh.position.setY(20);
-
 
 				scene.add(shelledMesh);
 				shelledMesh.add(bottomPlateMesh);
