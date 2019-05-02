@@ -36,6 +36,8 @@
 		<script src="build/three.js"></script>
 		<script src='examples/js/libs/dat.gui.min.js'></script>
 		<script src="examples/js/controls/OrbitControls.js"></script>
+		<script src="examples/js/controls/DragControls.js"></script>
+		<script src="examples/js/controls/TransformControls.js"></script>
 		<script src="examples/js/exporters/STLExporter.js"></script>
 		<script src="ThreeCSG.js"></script>
 		<script src="PQueue.js"></script>
@@ -51,6 +53,7 @@
 			// light variables
 			var light;
 			var sun;
+			var innerSun;
 			var sunPosition;
 
 			// Planter variables
@@ -99,7 +102,7 @@
 				scene.add(axes);
 
 				// LIGHTS
-				var light = new THREE.PointLight( 0xffffff, 1, 0 );
+				light = new THREE.PointLight( 0xffffff, 1, 0 );
 				light.position.set( 0, 80, 40 );
 				light.castShadow = true;
 				light.shadow.radius = 8;
@@ -112,7 +115,7 @@
 				var sunMaterial = new THREE.MeshBasicMaterial( { color: 0xffee71, transparent: true, opacity: 0.5 } );
 				var innerSunMaterial = new THREE.MeshBasicMaterial( { color: 0xffd600 } );
 				sun = new THREE.Mesh( sunGeometry, sunMaterial );
-				var innerSun = new THREE.Mesh( innerSunGeometry, innerSunMaterial );
+				innerSun = new THREE.Mesh( innerSunGeometry, innerSunMaterial );
 				sun.position.set( 0, 80, 40 );
 				innerSun.position.set( 0, 80, 40 );
 				scene.add(sun);
@@ -303,6 +306,8 @@
 				return n;
 			}
 
+			// 3D PRINTING FUNCTIONS
+
 			function exportSTL(mesh) {
 				var result = exporter.parse( mesh );
 		    saveString( result, 'pot.stl' );
@@ -321,6 +326,26 @@
 			function saveString( text, filename ) {
 				save( new Blob( [ text ], { type: 'text/plain' } ), filename );
 			}
+
+			// SHIFTING SUN POSITION
+			function moveSun(axis, value) {
+				switch(axis) {
+					case 'x':
+					sun.position.x = value;
+					innerSun.position.x = value;
+					light.position.x = value;
+					case 'y':
+					sun.position.y = value;
+					innerSun.position.y = value;
+					light.position.y = value;
+					case 'z':
+					sun.position.z = value;
+					innerSun.position.z = value;
+					light.position.z = value;
+				}
+			}
+
+			// SETTING UP GUI
 
 			function setupDatGui() {
 				gui = new dat.GUI({name: 'My GUI'});
@@ -385,17 +410,23 @@
 				// gui.add(options, 'sunPosition', 0, 360).name('Move sun');
 
 				var sunPosition = gui.addFolder('Sun Position');
-				var controller_sunX = sunPosition.add(options.sunPosition, 'sunX', 0, 200);
-				sunPosition.add(options.sunPosition, 'sunY', 0, 200);
-				sunPosition.add(options.sunPosition, 'sunZ', 0, 200);
+				var controller_sunX = sunPosition.add(options.sunPosition, 'sunX', 0, 150).name('X').listen();
+				controller_sunX.onChange(function(value) {
+					moveSun('x', value);
+				});
+				var controller_sunY = sunPosition.add(options.sunPosition, 'sunY', 0, 150).name('Y').listen();
+				controller_sunY.onChange(function(value) {
+					moveSun('y', value);
+				});
+				var controller_sunZ = sunPosition.add(options.sunPosition, 'sunZ', -150, 150).name('Z').listen();
+				controller_sunZ.onChange(function(value) {
+					moveSun('z', value);
+				});
 				sunPosition.open();
 
 				gui.add(options, 'exportSTL').name('Print');
 
-				controller_sunX.onChange(function(value) {
-					sun.position.x = sunX;
-					print("hello");
-				});
+
 			}
 
 			function animate() {
