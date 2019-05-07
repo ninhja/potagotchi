@@ -167,6 +167,41 @@
 				root = new Pot(geomType, material, wallThickness);
 				root.setPosition( 0, 0, 0 );
 				plantQueue.enqueue(root, calcPriority(root));
+				scene.add(root);
+				//shell(root, 2);
+			}
+
+			// creates the child shape to add to its parent shape
+			function createChild(parent) {
+				var child = new THREE.Mesh( geometry, material );
+
+				var parentSize = getSize(parent);
+				var childSize = parentSize * (Math.floor(Math.random()) + 1/10);
+				var scale = new THREE.Vector3(childSize, childSize, childSize);
+				// testing purposes
+				scene.add(child.scale(scale));
+				// position the child in a random so that it overlaps with its parent.
+				// child.position.set(getRandomInt(parent.position.x, parentSize),
+				// 									 getRandomY(parent.position.y, parentSize),
+				// 									 getRandomInt(parent.position.z, parentSize));
+				// 3D
+				// var validPositions = allPossibleChildPositions(parent.position, parentSize);
+				// var new_pos = getRandomChildPos(validPositions);
+				// 2D
+				var new_pos = getRandomChildPos2D(parent.position, parentSize, childSize);
+				child.position.set(new_pos.x, new_pos.y, new_pos.z);
+				console.log("parent position: " + parent.position.x+" "+parent.position.y+" "+parent.position.z + "    parentSize" + parentSize + "    child position" + child.position.x +" "+ child.position.y +" "+ child.position.z);
+				console.log(parentSize);
+				child.castShadow = true; //default is false
+				child.receiveShadow = false; //default
+				//addChild(parent, child);
+				plantQueue.enqueue(child, calcPriority(child));
+				//shell(child, 2);
+			}
+
+			// adds the child shape to its parent, then adds child to scene
+			function addChild(parent, child) {
+				parent.add(child);
 			}
 
 			// creates the child shape to add to its parent shape
@@ -222,16 +257,16 @@
 			}
 
 			// grows plan in xz axis
-			function getRandomChildPos2D(pos, dim) {
+			function getRandomChildPos2D(pos, parentDim, childDim) {
 				var solutions = [];
 				var pt = new THREE.Vector3( pos.x, pos.y, pos.z );
 				var x1, z1;
-				for (x1 = pt.x - dim; x1 < pt.x + dim; x1++) {
+				for (x1 = pt.x - ; x1 < pt.x + (parentDim/2) + childDim; x1++) {
 						for(z1 = pt.z - dim; z1 < pt.z + dim; z1++) {
 							var new_pt = new THREE.Vector3( x1, pt.y, z1 );
 							// distance between position and new point
 							var dist = pt.distanceTo(new_pt);
-							if (dist <= (dim / 2)) {
+							if (dist <= (1/2)*()) {
 								solutions.push(new_pt);
 								// console.log("x:" + new_pt.x + "y:" + new_pt.y + "z:" + new_pt.z);
 							}
