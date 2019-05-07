@@ -39,15 +39,10 @@
 		<script src="examples/js/controls/DragControls.js"></script>
 		<script src="examples/js/controls/TransformControls.js"></script>
 		<script src="examples/js/exporters/STLExporter.js"></script>
-		<script src="ThreeCSG.js"></script>
 		<script src="PQueue.js"></script>
-		<script src="ThreeCSG.js"></script>
-		<script src="Pot.js"></script>
 		<script type="module">
 
-
 			import CSG from "./CSGMesh.js"
-			// import Pot from "./Pot.js"
 
 			// Global control variables
 			var gui, scene, camera, renderer, controls, exporter, sunControl;
@@ -62,8 +57,9 @@
 			var root; // the base Object3D shape of the planter.
 			var geometry; // the geometry of the root and its children:
 										//{BoxGeometry, CylinderGeometry, SphereGeometry, etc.}
-			var geomType; // a String that tells you the type of geometry
+			var geomType = 'cube'; // a String that tells you the type of geometry
 			var material = new THREE.MeshLambertMaterial( {color: 0x69ff00} ); //0x69ff00 0x47ff00
+			var wallThickness = 1.5;
 			var plantQueue;
 
 			function init() {
@@ -102,7 +98,7 @@
 
 				// AXES HELPER
 				// The X axis is red. The Y axis is green. The Z axis is blue.
-				var axes = new THREE.AxesHelper(400);
+				var axes = new THREE.AxesHelper(200);
 				scene.add(axes);
 
 				// LIGHTS
@@ -136,7 +132,6 @@
 				sunControlToggle(false);
 				scene.add( sunControl );
 
-
 				// FLOOR
 				var floorMaterial = new THREE.MeshLambertMaterial( { color: 0x2DA100 } );
 				var floorGeometry = new THREE.CylinderGeometry(70, 70, 2, 64, 64);
@@ -150,7 +145,6 @@
 				var skyBoxMaterial = new THREE.MeshBasicMaterial( { color: 0xa7d3ff, side: THREE.BackSide } );
 				var skyBox = new THREE.Mesh( skyBoxGeometry, skyBoxMaterial );
 				scene.add(skyBox);
-				// scene.fog = new THREE.FogExp2( 0x75baff, 0.007 );
 
 				// RESIZE WINDOW
 				window.addEventListener( 'resize', function () {
@@ -164,128 +158,46 @@
 
 				// creating Priority queue for planter
 				plantQueue = new PriorityQueue();
-
 			}
 
 			// creates the root of the pot (the base shape)
 			// args: geom (type = String) is the seed shape that the user specified in gui.
-			function createRoot( geom ) {
-				geomType = geom;
-
-				// choose the type of geometry, based on what the user specified in gui
-				geometry = (function(geomType) {
-					switch(geomType) {
-						case 'cube':
-							return new THREE.BoxGeometry( 10, 10, 10 );
-						case 'cylinder':
-							return new THREE.CylinderGeometry( 10, 10, 10, 32, 32 );
-						case 'sphere':
-							return new THREE.SphereGeometry( 10, 32, 32);
-					}
-				})(geomType);
-
+			function createRoot() {
 				// create the root object. This will be the base of the planter.
-				root = new Pot(geometry, geomType, material, 2);
+				root = new Pot(geomType, material, wallThickness);
 				root.setPosition( 0, 0, 0 );
 				plantQueue.enqueue(root, calcPriority(root));
 			}
 
 			// creates the child shape to add to its parent shape
 	    function createChild(parent) {
-	      var child = new THREE.Mesh( geometry, material );
-	      var parentSize = getSize(parent);
+				var child = new Pot(geomType, material, wallThickness, parent);
+	      var parentSize = parent.getSize();
+				var parentPos = parent.getPosition();
 
-	      // position the child in a random so that it overlaps with its parent.
-	      // child.position.set(getRandomInt(parent.position.x, parentSize),
-	      // 									 getRandomY(parent.position.y, parentSize),
-	      // 									 getRandomInt(parent.position.z, parentSize));
-	      var validPositions = allPossibleChildPositions(parent.position, parentSize);
+	      var validPositions = allPossibleChildPositions(parentPos, parentSize);
 	      var new_pos = getRandomChildPos(validPositions);
-	      child.position.set(new_pos.x, new_pos.y, new_pos.z);
-	      child.castShadow = true; //default is false
-	      child.receiveShadow = false; //default
-	      addChild(parent, child);
+	      child.setPosition(new_pos.x, new_pos.y, new_pos.z);
+
 	      plantQueue.enqueue(child, calcPriority(child));
-	      shell(child, 2);
 	    }
 
 			function calcPriority(child) {
 				var priority;
 				// closer it is, higher in priority queue
-				priority += calcDistance(child, sun);
+				priority += calcDistance(child.outerMesh, sun);
 				return priority;
 			}
 
-			function calcDistance(point1, point2) {
-				var x1 = point1.position.x,
-						x2 = point2.position.x,
-						y1 = point1.position.y,
-						y2 = point2.position.y,
-						z1 = point1.position.z,
-						z2 = point2.position.z;
+			function calcDistance(object1, object2) {
+				var x1 = object1.position.x,
+						x2 = object2.position.x,
+						y1 = object1.position.y,
+						y2 = object2.position.y,
+						z1 = object1.position.z,
+						z2 = object2.position.z;
 				var dist = Math.sqrt( Math.pow((x1-x2), 2) + Math.pow((y1-y2), 2) + Math.pow((z1-z2), 2));
 				return dist;
-			}
-
-			function shell(object, wallThickness) {
-				var outerSize = getSize(object);
-				var bottomPlateMesh;
-				var bottomPlateGeom;
-				var innerGeom = (function(geomType) {
-					var innerSize;
-					var bottomPlate;
-
-					switch(geomType) {
-						case 'cube':
-							innerSize = outerSize - (2 * wallThickness);
-
-							bottomPlateGeom = new THREE.CubeGeometry( outerSize, wallThickness, outerSize );
-							bottomPlateMesh = new THREE.Mesh(bottomPlateGeom, material);
-							bottomPlateMesh.position.set(object.position.x, object.position.y, object.position.z);
-							bottomPlateMesh.position.setY(object.position.y - (outerSize/2) + (wallThickness/2));
-
-							return new THREE.CubeGeometry( innerSize, 50, innerSize );
-						case 'cylinder':
-							innerSize = outerSize - wallThickness;
-
-							bottomPlateGeom = new THREE.CylinderGeometry( outerSize, outerSize, wallThickness, 32, 32 );
-							bottomPlateMesh = new THREE.Mesh(bottomPlateGeom, material);
-							bottomPlateMesh.position.set(object.position.x, object.position.y, object.position.z);
-							bottomPlateMesh.position.setY(object.position.y - (outerSize/2) + (wallThickness/2));
-
-							return new THREE.CylinderGeometry( innerSize, innerSize, 50, 32, 32 );
-						case 'sphere':
-							innerSize = outerSize - wallThickness*2;
-
-							bottomPlateGeom = new THREE.CylinderGeometry( innerSize, innerSize, wallThickness, 32, 32)
-							bottomPlateMesh = new THREE.Mesh(bottomPlateGeom, material);
-							bottomPlateMesh.position.set(object.position.x, object.position.y, object.position.z);
-							bottomPlateMesh.position.setY(object.position.y - (outerSize) + (wallThickness*1.5));
-
-							return new THREE.CylinderGeometry( innerSize, innerSize, 50, 32, 32);
-					}
-				})(geomType);
-
-				var innerMesh = new THREE.Mesh(innerGeom);
-				var shelledMesh = doCSG( object,innerMesh, 'subtract',object.material);
-
-				scene.add(shelledMesh);
-				shelledMesh.add(bottomPlateMesh);
-				root = shelledMesh;
-
-			}
-
-			// helper function for creating a new object.
-			// turns the solid geometry into a shell, with specified wall thickness
-			function getSize(object) {
-				switch(geomType) {
-					case 'cube':
-						return object.geometry.parameters.width;
-					case 'cylinder':
-						return object.geometry.parameters.radiusTop;
-					case 'sphere':
-						return object.geometry.parameters.radius;
-				}
 			}
 
 			function getRandomInt(pos, dim) {
@@ -346,13 +258,13 @@
 							// distance between position and new point
 							var dist = pt.distanceTo(new_pt);
 							if (dist <= (dim / 2)) {
-								solutions.push(new_pt)
+								solutions.push(new_pt);
 								// console.log("x:" + new_pt.x + "y:" + new_pt.y + "z:" + new_pt.z);
 							}
 						}
 					}
 				}
-				return solutions
+				return solutions;
 			}
 
 			// 3D PRINTING FUNCTIONS
@@ -388,7 +300,7 @@
 						if (root != null) {
 							alert("You already have a planter growing! Uproot it to plant a new one.");
 						} else {
-							createRoot(options.seedShape);
+							createRoot();
 
 						}
 				  },
@@ -414,12 +326,15 @@
 						if (root == null) {
 							alert("Plant your seed first!");
 						} else {
-							exportSTL(root);
+							console.log(root.groupedMeshes.children);
+							exportSTL(root.groupedMeshes);
 						}
 					}
 				};
 
-				var seedShape = gui.add(options, 'seedShape', [ 'cube', 'cylinder', 'sphere' ] ).name('Seed shape');
+				var seedShape = gui.add(options, 'seedShape', [ 'cube', 'cylinder', 'sphere' ] ).name('Seed shape').onChange(function (value) {
+				  geomType = value;
+				});
 
 				gui.add(options, 'createRoot').name('Plant a new seed');
 				gui.add(options, 'addChild').name('Grow planter');
@@ -453,6 +368,133 @@
 
 			function alertMessage( message ) {
 				alert( message );
+			}
+
+
+			class Pot {
+			  constructor(_geomType, _material, _wallThickness, _parent = null)
+			  {
+			    this.geomType = _geomType;
+			    this.material = _material;
+			    this.wallThickness = _wallThickness;
+					this.parent = _parent;
+
+			    // choose the type of geometry, based on what the user specified in gui
+			    this.outerGeom = (function(geomType) {
+			      switch(geomType) {
+			        case 'cube':
+			          return new THREE.BoxGeometry( 10, 10, 10 );
+			        case 'cylinder':
+			          return new THREE.CylinderGeometry( 10, 10, 10, 32, 32 );
+			        case 'sphere':
+			          return new THREE.SphereGeometry( 10, 32, 32);
+			      }
+			    })(this.geomType);
+			    this.outerMesh = new THREE.Mesh(this.outerGeom, this.material);
+
+			    this.innerGeom;
+			    this.innerMesh;
+
+			    this.bottomPlateGeom;
+			    this.bottomPlateMesh;
+
+			    this.groupedMeshes = new THREE.Group();
+
+			    this.groupedMeshes.castShadow = true; //default is false
+			    this.groupedMeshes.receiveShadow = false; //default
+
+			    this.shelledMesh;
+			    this.shell();
+			  }
+
+				getPosition() {
+			    return this.outerMesh.position;
+			  }
+
+			  setPosition(x, y, z) {
+			    this.groupedMeshes.position.set(x, y, z);
+			  }
+
+			  // adds the child shape to its parent, then adds child to scene
+			  addChild(parent, child) {
+			    parent.add(child);
+			  }
+
+			  shell() {
+			    this.innerGeom = this.getInnerGeom(this.geomType);
+			    this.innerMesh = new THREE.Mesh(this.innerGeom);
+			    this.shelledMesh = this.doCSG( this.outerMesh, this.innerMesh, 'subtract', this.material);
+
+			    this.groupedMeshes.add(this.shelledMesh);
+			    this.groupedMeshes.add(this.bottomPlateMesh);
+
+					if (this.parent == null) {
+						scene.add(this.groupedMeshes);
+					} else {
+						this.parent.groupedMeshes.add(this.groupedMeshes);
+						console.log("added to children hehehe");
+					}
+			  }
+
+			  getInnerGeom(geomType) {
+			    var outerSize = this.getSize();
+			    var innerSize;
+			    var bottomPlate;
+
+			    switch(geomType) {
+			      case 'cube':
+			        // innerSize = outerSize - (2 * this.wallThickness);
+			        innerSize = outerSize - (2 * this.wallThickness);
+
+			        this.bottomPlateGeom = new THREE.CubeGeometry( outerSize, this.wallThickness, outerSize );
+			        this.bottomPlateMesh = new THREE.Mesh(this.bottomPlateGeom, this.material);
+			        this.bottomPlateMesh.position.set(this.outerMesh.position.x, this.outerMesh.position.y, this.outerMesh.position.z);
+			        this.bottomPlateMesh.position.setY(this.outerMesh.position.y - (outerSize/2) + (this.wallThickness/2));
+
+			        return new THREE.CubeGeometry( innerSize, 50, innerSize );
+			      case 'cylinder':
+			        innerSize = outerSize - this.wallThickness;
+
+			        this.bottomPlateGeom = new THREE.CylinderGeometry( outerSize, outerSize, this.wallThickness, 32, 32 );
+			        this.bottomPlateMesh = new THREE.Mesh(this.bottomPlateGeom, this.material);
+			        this.bottomPlateMesh.position.set(this.outerMesh.position.x, this.outerMesh.position.y, this.outerMesh.position.z);
+			        this.bottomPlateMesh.position.setY(this.outerMesh.position.y - (outerSize/2) + (this.wallThickness/2));
+
+			        return new THREE.CylinderGeometry( innerSize, innerSize, 50, 32, 32 );
+			      case 'sphere':
+			        innerSize = outerSize - this.wallThickness*2;
+
+			        this.bottomPlateGeom = new THREE.CylinderGeometry( innerSize, innerSize, this.wallThickness, 32, 32)
+			        this.bottomPlateMesh = new THREE.Mesh(this.bottomPlateGeom, this.material);
+			        this.bottomPlateMesh.position.set(this.outerMesh.position.x, this.outerMesh.position.y, this.outerMesh.position.z);
+			        this.bottomPlateMesh.position.setY(this.outerMesh.position.y - (outerSize) + (this.wallThickness*1.5));
+
+			        return new THREE.CylinderGeometry( innerSize, innerSize, 50, 32, 32);
+			    }
+			  }
+
+			  doCSG(a,b,op,mat){
+			     var bspA = CSG.fromMesh( a );
+			     var bspB = CSG.fromMesh( b );
+			     var bspC = bspA[op]( bspB );
+			     var result = CSG.toMesh( bspC, a.matrix );
+			     result.material = mat;
+			     result.castShadow  = result.receiveShadow = true;
+			     return result;
+			  }
+
+			  // helper function for creating a new object.
+			  // turns the solid geometry into a shell, with specified wall thickness
+			  getSize() {
+			    switch(this.geomType) {
+			      case 'cube':
+			        return this.outerGeom.parameters.width;
+			      case 'cylinder':
+			        return this.outerGeom.parameters.radiusTop;
+			      case 'sphere':
+			        return this.outerGeom.parameters.radius;
+			    }
+			  }
 			}
 
 			init();
