@@ -42,10 +42,12 @@
 		<script src="ThreeCSG.js"></script>
 		<script src="PQueue.js"></script>
 		<script src="ThreeCSG.js"></script>
+		<script src="Pot.js"></script>
 		<script type="module">
 
 
 			import CSG from "./CSGMesh.js"
+			// import Pot from "./Pot.js"
 
 			// Global control variables
 			var gui, scene, camera, renderer, controls, exporter, sunControl;
@@ -165,39 +167,26 @@
 
 			}
 
-			function doCSG(a,b,op,mat){
-			   var bspA = CSG.fromMesh( a );
-			   var bspB = CSG.fromMesh( b );
-			   var bspC = bspA[op]( bspB );
-			   var result = CSG.toMesh( bspC, a.matrix );
-			   result.material = mat;
-			   result.castShadow  = result.receiveShadow = true;
-			   return result;
-			}
-
 			// creates the root of the pot (the base shape)
 			// args: geom (type = String) is the seed shape that the user specified in gui.
 			function createRoot( geom ) {
 				geomType = geom;
 
 				// choose the type of geometry, based on what the user specified in gui
-				geometry = (function(geomType) {
-					switch(geomType) {
-						case 'cube':
-							return new THREE.BoxGeometry( 10, 10, 10 );
-						case 'cylinder':
-							return new THREE.CylinderGeometry( 10, 10, 10, 32, 32 );
-						case 'sphere':
-							return new THREE.SphereGeometry( 10, 32, 32);
-					}
-				})(geomType);
+				// geometry = (function(geomType) {
+				// 	switch(geomType) {
+				// 		case 'cube':
+				// 			return new THREE.BoxGeometry( 10, 10, 10 );
+				// 		case 'cylinder':
+				// 			return new THREE.CylinderGeometry( 10, 10, 10, 32, 32 );
+				// 		case 'sphere':
+				// 			return new THREE.SphereGeometry( 10, 32, 32);
+				// 	}
+				// })(geomType);
 
 				// create the root object. This will be the base of the planter.
-				root = new THREE.Mesh( geometry, material );
-				root.position.set( 0, 0, 0 );
-				console.log("root position" + root.position.x + " " + root.position.y + " " + root.position.z);
-				root.castShadow = true; //default is false
-				root.receiveShadow = false; //default
+				root = new Pot(geometry, geomType, material, 2);
+				root.setPosition( 0, 0, 0 );
 				plantQueue.enqueue(root, calcPriority(root));
 				scene.add(root);
 				//shell(root, 2);
@@ -235,6 +224,25 @@
 			function addChild(parent, child) {
 				parent.add(child);
 			}
+
+			// creates the child shape to add to its parent shape
+	    function createChild(parent) {
+	      var child = new THREE.Mesh( geometry, material );
+	      var parentSize = getSize(parent);
+
+	      // position the child in a random so that it overlaps with its parent.
+	      // child.position.set(getRandomInt(parent.position.x, parentSize),
+	      // 									 getRandomY(parent.position.y, parentSize),
+	      // 									 getRandomInt(parent.position.z, parentSize));
+	      var validPositions = allPossibleChildPositions(parent.position, parentSize);
+	      var new_pos = getRandomChildPos(validPositions);
+	      child.position.set(new_pos.x, new_pos.y, new_pos.z);
+	      child.castShadow = true; //default is false
+	      child.receiveShadow = false; //default
+	      addChild(parent, child);
+	      plantQueue.enqueue(child, calcPriority(child));
+	      shell(child, 2);
+	    }
 
 			function calcPriority(child) {
 				var priority;
@@ -315,7 +323,6 @@
 				}
 			}
 
-			// position, length of geometry
 			function getRandomInt(pos, dim) {
 				var diff = dim / 4;
 				var min = pos - (dim / 2);
