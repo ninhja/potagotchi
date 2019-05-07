@@ -173,16 +173,16 @@
 				geomType = geom;
 
 				// choose the type of geometry, based on what the user specified in gui
-				// geometry = (function(geomType) {
-				// 	switch(geomType) {
-				// 		case 'cube':
-				// 			return new THREE.BoxGeometry( 10, 10, 10 );
-				// 		case 'cylinder':
-				// 			return new THREE.CylinderGeometry( 10, 10, 10, 32, 32 );
-				// 		case 'sphere':
-				// 			return new THREE.SphereGeometry( 10, 32, 32);
-				// 	}
-				// })(geomType);
+				geometry = (function(geomType) {
+					switch(geomType) {
+						case 'cube':
+							return new THREE.BoxGeometry( 10, 10, 10 );
+						case 'cylinder':
+							return new THREE.CylinderGeometry( 10, 10, 10, 32, 32 );
+						case 'sphere':
+							return new THREE.SphereGeometry( 10, 32, 32);
+					}
+				})(geomType);
 
 				// create the root object. This will be the base of the planter.
 				root = new Pot(geometry, geomType, material, 2);
