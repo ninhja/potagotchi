@@ -372,6 +372,13 @@
 
 			// 3D PRINTING FUNCTIONS
 
+			function shrink() {
+				console.log("shrink");
+				console.log("potgroup: " + (potGroup));
+			  potGroup.scale.set(0.9,0.9,0.9);
+				// scene.add(potGroup);
+			}
+
 
 			function exportSTL(mesh) {
 				var result = exporter.parse( mesh );
@@ -435,6 +442,14 @@
 							//console.log(root.groupedMeshes.children);
 							exportSTL(potGroup);
 						}
+					},
+					shrink: function() {
+						if (root == null) {
+							alert("Plant your seed first!");
+						} else {
+							//console.log(root.groupedMeshes.children);
+							shrink();
+						}
 					}
 				};
 
@@ -452,6 +467,8 @@
 				});
 
 				gui.add(options, 'exportSTL').name('Print');
+
+				gui.add(options, 'shrink').name('shrink');
 
 
 			}
