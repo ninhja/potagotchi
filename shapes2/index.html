@@ -173,7 +173,7 @@
 			function scaleChild(parentSize) {
 				// calculate random number from range(min,max)
 				var min = 0.25;
-				var max = 1.5;
+				var max = 2.0;
 				var childSize = 0;
 
 				// adding condition to have consistent wallThickness
@@ -261,7 +261,7 @@
 				var solutions = [];
 				var pt = new THREE.Vector3( pos.x, pos.y, pos.z );
 				var x1, z1;
-				for (x1 = pt.x - (parentDim/2) - (childDim/4); x1 < pt.x + (parentDim/2) + (childDim/4); x1++) {
+				for (x1 = pt.x - (parentDim/2) - (childDim/2); x1 < pt.x + (parentDim/2) + (childDim/2); x1++) {
 						for (z1 = pt.z - (parentDim/2); z1 < pt.z + (parentDim/2); z1++) {
 							var pos_y = -5 + (childDim/2);
 							var new_pt = new THREE.Vector3( x1, pos_y, z1 );
