@@ -132,7 +132,8 @@
 				scene.add( sunControl );
 
 				// FLOOR
-				var floorMaterial = new THREE.MeshLambertMaterial( { color: 0x2DA100 } );
+				// var floorMaterial = new THREE.MeshLambertMaterial( { color: 0x2DA100, wireframe: true } );
+				var floorMaterial = new THREE.MeshLambertMaterial( { color: 0x00000, wireframe: true } );
 				var floorGeometry = new THREE.CylinderGeometry(70, 70, 2, 64, 64);
 				var floor = new THREE.Mesh(floorGeometry, floorMaterial);
 				floor.position.y = -6;
@@ -165,7 +166,7 @@
 				// create the root object. This will be the base of the planter.
 				root = new Pot();
 				root.setPosition( 0, 0, 0 );
-				console.log("rootx: " + root.getPosition().x);
+				console.log("rooty: " + root.getPosition().y);
 				plantQueue.enqueue(root, calcPriority(root));
 			}
 
@@ -177,6 +178,7 @@
 
 				// adding condition to have consistent wallThickness
 				while (childSize < wallThickness*4) {
+					// childSize = Math.floor(parentSize * (Math.random()*(max-min))+min);
 					childSize = parentSize * (Math.random()*(max-min))+min;
 				}
 				return childSize;
@@ -191,6 +193,7 @@
 				// scaling
 				var childSize = scaleChild(parentSize);
 				console.log("childsize: " + childSize);
+				console.log("childsize/2: " + childSize/2);
 				var child = new Pot(parent, childSize);
 				// child.scale(childSize, childSize, childSize);
 				var new_pos = getRandomChildPos2D(parentPos, parentSize, childSize);
@@ -198,6 +201,7 @@
 				// var validPositions = allPossibleChildPositions(parentPos, parentSize);
 				// var new_pos = getRandomChildPos(validPositions);
 				//console.log("new_px " + new_pos.x + "new_py" + new_pos.y + "new_pz" + new_pos.z);
+				console.log("child_y: " + new_pos.y);
 				child.setPosition(new_pos.x, new_pos.y, new_pos.z);
 
 				plantQueue.enqueue(child, calcPriority(child));
@@ -206,7 +210,7 @@
 			function calcPriority(child) {
 				var priority;
 				// closer it is, higher in priority queue
-				console.log("child pos: " + child.getPosition().x);
+				//console.log("child pos: " + child.getPosition().x);
 				priority += calcDistance(sun, child);
 				return priority;
 			}
@@ -245,24 +249,31 @@
 				return n;
 			}
 
+			function potIsFlat(pos_y, dim) {
+				if (pos_y - (dim/2) == -5) {
+					return true;
+				}
+				return false;
+			}
+
 			// grows plan in xz axis
 			function getRandomChildPos2D(pos, parentDim, childDim) {
 				var solutions = [];
 				var pt = new THREE.Vector3( pos.x, pos.y, pos.z );
 				var x1, z1;
 				for (x1 = pt.x - (parentDim/2) - (childDim/4); x1 < pt.x + (parentDim/2) + (childDim/4); x1++) {
-						// if ()
 						for (z1 = pt.z - (parentDim/2); z1 < pt.z + (parentDim/2); z1++) {
-							// pot cannot grow below floor
-							// if (z1 - (childDim / 2) < 0) {
-							// 	continue;
-							// }
-							var new_pt = new THREE.Vector3( x1, -6 + (childDim/2), z1 );
+							var pos_y = -5 + (childDim/2);
+							var new_pt = new THREE.Vector3( x1, pos_y, z1 );
+							console.log("pos_y: " + pos_y);
+							// console.log("flat?: " + potIsFlat(pos_y, childDim));
+							//var new_pt = new THREE.Vector3( x1, z1, -6 + (childDim) );
+							// console.log("x:" + new_pt.x + "y:" + new_pt.y + "z:" + new_pt.z);
 							// distance between position and new point
 							var dist = pt.distanceTo(new_pt);
 							// console.log("dist: " + dist);
 							if (checkForOverlap(pt, parentDim, new_pt, childDim) == true) {
-								console.log("it overlaps yo");
+								// console.log("it overlaps yo");
 								solutions.push(new_pt);
 							}
 
@@ -285,12 +296,13 @@
 			//of the two cubes. (Basically, you're checking bounding spheres
 			//instead of worrying about hyperplanes.)
 			function checkForOverlap(pos1, dim1, pos2, dim2) {
-				console.log("checking for overlap");
+				//console.log("checking for overlap");
 				var dist = pos1.distanceTo(pos2);
-				console.log("dist: " + dist);
+				//console.log("dist: " + dist);
 				var diag1 = Math.sqrt(3) * dim1;
-				console.log("diags: " + (1/2)*(diag1+diag2));
 				var diag2 = Math.sqrt(3) * dim2;
+				//console.log("diags: " + (1/2)*(diag1+diag2));
+
 				if (dist > (1/2)*(diag1+diag2)) {
 					return false;
 				}
@@ -432,7 +444,7 @@
 			  {
 					this.parent = _parent;
 			    this.outerMesh = new THREE.Mesh(this.getGeom(_size), material);
-					console.log("geomtype: " + this.getGeom(_size));
+					//console.log("geomtype: " + this.getGeom(_size));
 			    this.shelledMesh;
 			    this.shell();
 			  }
@@ -484,13 +496,13 @@
 					this.shelledMesh.castShadow = true; //default is false
 			    this.shelledMesh.receiveShadow = false; //default
 
-					// scene.add(shelledMesh);
+					scene.add(this.shelledMesh);
 
-					if (this.parent == null) {
-						scene.add(this.shelledMesh);
-					} else {
-						this.parent.shelledMesh.add(this.shelledMesh);
-					}
+					// if (this.parent == null) {
+					// 	scene.add(this.shelledMesh);
+					// } else {
+					// 	this.parent.shelledMesh.add(this.shelledMesh);
+					// }
 			  }
 
 				display() {
