@@ -22,11 +22,7 @@
 				overflow: hidden;
 			}
 
-			canvas {
-				width: 100%;
-				height: 100%;
-				background-color: #FA8072;
-		 }
+
 
 		</style>
 	</head>
@@ -183,7 +179,7 @@
 				// create the root object. This will be the base of the planter.
 				root = new Pot();
 				root.setPosition( 0, 0, 0 );
-				console.log("rooty: " + root.getPosition().y);
+				// console.log("rooty: " + root.getPosition().y);
 				plantQueue.enqueue(root, calcPriority(root));
 				potGroup.add(root.shelledMesh);
 				scene.add(potGroup);
@@ -191,15 +187,16 @@
 
 			function scaleChild(parentSize) {
 				// calculate random number from range(min,max)
-				var min = 0.5;
+				var min = 0.7;
 				var max = 1.5;
-				var childSize = 0;
+				var childSize = wallThickness*3;
 
 				// adding condition to have consistent wallThickness
-				while (childSize < wallThickness*5) {
+				while (childSize <= 15) {
 					// childSize = Math.floor(parentSize * (Math.random()*(max-min))+min);
-					childSize = parentSize * (Math.random()*(max-min))+min;
+					childSize = parentSize * (Math.random()*(max-min)+min);
 				}
+				console.log("childSize " + childSize);
 				return childSize;
 			}
 
@@ -208,11 +205,12 @@
 				// var child = new Pot(parent);
 				var parentSize = parent.getSize();
 				var parentPos = parent.getPosition();
+				parent.incrementNumChildren();
 
 				// scaling
 				var childSize = scaleChild(parentSize);
-				console.log("childsize: " + childSize);
-				console.log("childsize/2: " + childSize/2);
+				// console.log("childsize: " + childSize);
+				// console.log("childsize/2: " + childSize/2);
 				var child = new Pot(parent, childSize);
 				// child.scale(childSize, childSize, childSize);
 				var new_pos = getRandomChildPos2D(parentPos, parentSize, childSize);
@@ -220,7 +218,7 @@
 				// var validPositions = allPossibleChildPositions(parentPos, parentSize);
 				// var new_pos = getRandomChildPos(validPositions);
 				//console.log("new_px " + new_pos.x + "new_py" + new_pos.y + "new_pz" + new_pos.z);
-				console.log("child_y: " + new_pos.y);
+				// console.log("child_y: " + new_pos.y);
 				child.setPosition(new_pos.x, new_pos.y, new_pos.z);
 
 				plantQueue.enqueue(child, calcPriority(child));
@@ -231,7 +229,8 @@
 				var priority;
 				// closer it is, higher in priority queue
 				//console.log("child pos: " + child.getPosition().x);
-				priority += calcDistance(sun, child);
+				priority = calcDistance(sun, child);
+				// console.log(priority);
 				return priority;
 			}
 
@@ -282,25 +281,25 @@
 
 			// grows plan in xz axis
 			function getRandomChildPos2D(pos, parentDim, childDim) {
-				console.log(pos, parentDim, childDim);
+				// console.log(pos, parentDim, childDim);
 				var solutions = [];
 				var pt = new THREE.Vector3( pos.x, pos.y, pos.z );
 				var x1, z1;
 				for (x1 = pt.x - (parentDim/2) - (childDim/2); x1 < pt.x + (parentDim/2) + (childDim/2); x1++) {
 						// stop your nesting shit bro
 						if (x1 == pt.x-(parentDim/2) + 1) {
-							console.log("no nesting yo");
+							// console.log("no nesting yo");
 							x1 = pt.x+(parentDim/2)
 						}
 						for (z1 = pt.z - (parentDim/2)- (childDim/2); z1 < pt.z + (parentDim/2)+ (childDim/2); z1++) {
 							// stop your nesting shit bro
 							if (z1 == pt.z-(parentDim/2) + 1) {
-								console.log("no nesting yo");
+								// console.log("no nesting yo");
 								z1 = pt.z+(parentDim/2)
 							}
 							var pos_y = -5 + (childDim/2);
 							var new_pt = new THREE.Vector3( x1, pos_y, z1 );
-							console.log("pos_y: " + pos_y);
+							// console.log("pos_y: " + pos_y);
 							// console.log("flat?: " + potIsFlat(pos_y, childDim));
 							//var new_pt = new THREE.Vector3( x1, z1, -6 + (childDim) );
 							// console.log("x:" + new_pt.x + "y:" + new_pt.y + "z:" + new_pt.z);
@@ -374,8 +373,8 @@
 			// 3D PRINTING FUNCTIONS
 
 			function shrink() {
-				console.log("shrink");
-				console.log("potgroup: " + (potGroup));
+				// console.log("shrink");
+				// console.log("potgroup: " + (potGroup));
 			  potGroup.scale.set(0.9,0.9,0.9);
 				// scene.add(potGroup);
 			}
@@ -420,7 +419,13 @@
 						if (root == null) {
 							alert("Plant your seed first!");
 						} else {
-							createChild(plantQueue.dequeue().element);
+							var maxChildren = 1;
+							var parent = plantQueue.front().element;
+							while (parent.numChildren > maxChildren) {
+								plantQueue.dequeue();
+								parent = plantQueue.front().element;
+							}
+							createChild(parent);
 						}
 				  },
 					uprootPlanter: function() {
@@ -499,11 +504,16 @@
 			  constructor(_parent = null, _size = 10)
 			  {
 					this.parent = _parent;
+					this.numChildren = 0;
 			    this.outerMesh = new THREE.Mesh(this.getGeom(_size), material);
 					//console.log("geomtype: " + this.getGeom(_size));
 			    this.shelledMesh;
 			    this.shell();
 			  }
+
+				incrementNumChildren() {
+					this.numChildren += 1;
+				}
 
 				getPosition() {
 			    return this.shelledMesh.position;
@@ -526,9 +536,19 @@
 					}
 				}
 
-				scale(multiplier) {
-					
-				}
+				// scale(parentSize) {
+				// 	// calculate random number from range(min,max)
+				// 	var min = 0.9;
+				// 	var max = 1.9;
+				// 	var childSize = 0;
+				//
+				// 	// adding condition to have consistent wallThickness
+				// 	while (childSize < wallThickness*5) {
+				// 		// childSize = Math.floor(parentSize * (Math.random()*(max-min))+min);
+				// 		childSize = parentSize * (Math.random()*(max-min))+min;
+				// 	}
+				// 	return childSize;
+				// }
 
 			  shell() {
 			    var innerGeom = this.getInnerGeom(geomType);
@@ -546,7 +566,7 @@
 					this.shelledMesh.castShadow = true; //default is false
 			    this.shelledMesh.receiveShadow = false; //default
 
-					scene.add(this.shelledMesh);
+					// scene.add(this.shelledMesh);
 			  }
 
 				// helper function for creating a new object.
