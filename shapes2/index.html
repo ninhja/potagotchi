@@ -136,8 +136,8 @@
 				scene.add( sunControl );
 
 				// FLOOR
-				var floorMaterial = new THREE.MeshLambertMaterial( { color: 0x2DA100 } );
-				//var floorMaterial = new THREE.MeshLambertMaterial( { color: 0x00000, wireframe: true } );
+				// var floorMaterial = new THREE.MeshLambertMaterial( { color: 0x2DA100 } );
+				var floorMaterial = new THREE.MeshLambertMaterial( { color: 0x00000, wireframe: true } );
 				var floorGeometry = new THREE.CylinderGeometry(70, 70, 2, 64, 64);
 				var floor = new THREE.Mesh(floorGeometry, floorMaterial);
 				floor.position.y = -6;
@@ -164,15 +164,6 @@
 				plantQueue = new PriorityQueue();
 			}
 
-			// function mergeMeshesForExport(mesh) {
-			// 	var mergedMesh = new THREE.Geometry();
-			// 	exportedMesh.updateMatrix(); // as needed
-			// 	mesh.updateMatrix();
-			// 	mergedMesh.merge(exportedMesh.geometry, exportedMesh.matrix);
-			// 	mergedMesh.merge(mesh.geometry, mesh.matrix);
-			// 	exportedMesh = mergedMesh;
-			// }
-
 			// creates the root of the pot (the base shape)
 			// args: geom (type = String) is the seed shape that the user specified in gui.
 			function createRoot() {
@@ -185,22 +176,6 @@
 				scene.add(potGroup);
 			}
 
-			function scaleChild(parentSize) {
-				// calculate random number from range(min,max)
-				var min = 0.7;
-				var max = 1.5;
-				var childSize = parentSize * (Math.random()*(max-min)+min);
-				console.log("childSize " + childSize);
-				// max size allowed
-				if (childSize > 15) {
-					childSize = 15;
-				}
-				if (childSize < wallThickness * 3) {
-					childSize = wallThickness * 3;
-				}
-				return childSize;
-			}
-
 			// creates the child shape to add to its parent shape
 			function createChild(parent) {
 				// var child = new Pot(parent);
@@ -208,18 +183,9 @@
 				var parentPos = parent.getPosition();
 				parent.incrementNumChildren();
 
-				// scaling
-				var childSize = scaleChild(parentSize);
-				// console.log("childsize: " + childSize);
-				// console.log("childsize/2: " + childSize/2);
-				var child = new Pot(parent, childSize);
-				// child.scale(childSize, childSize, childSize);
-				var new_pos = getRandomChildPos2D(parentPos, parentSize, childSize);
+				var child = new Pot(parent);
+				var new_pos = getRandomChildPos2D(parentPos, parentSize, child.getHeight());
 
-				// var validPositions = allPossibleChildPositions(parentPos, parentSize);
-				// var new_pos = getRandomChildPos(validPositions);
-				//console.log("new_px " + new_pos.x + "new_py" + new_pos.y + "new_pz" + new_pos.z);
-				// console.log("child_y: " + new_pos.y);
 				child.setPosition(new_pos.x, new_pos.y, new_pos.z);
 
 				plantQueue.enqueue(child, calcPriority(child));
@@ -401,7 +367,6 @@
 			}
 
 			// SETTING UP GUI
-
 			function setupDatGui() {
 				gui = new dat.GUI({name: 'My GUI'});
 
@@ -413,7 +378,6 @@
 							alert("You already have a planter growing! Uproot it to plant a new one.");
 						} else {
 							createRoot();
-
 						}
 				  },
 				  addChild: function() {
@@ -422,13 +386,32 @@
 						} else {
 							var maxChildren = 1;
 							var parent = plantQueue.front().element;
-							while (parent.numChildren > maxChildren) {
+							if (parent.numChildren > maxChildren) {
 								plantQueue.dequeue();
-								parent = plantQueue.front().element;
+								// grow pot in y-dir if max num children
+								// var parentHeight = parent.getHeight();
+								// if (parentHeight > 2 * parent.getSize()) {
+								// 	plantQueue.dequeue();
+								// } else {
+								// 	parent = plantQueue.front().element;
+								// 	parent.scaleY();
+								// }
+
 							}
 							createChild(parent);
 						}
 				  },
+					scaleShape: function() {
+						var shape = plantQueue.dequeue().element;
+
+						var meshPosition = shape.getPosition();
+						potGroup.remove(shape.shelledMesh);
+
+						shape = shape.scaleY();
+						potGroup.add(shape.shelledMesh);
+						plantQueue.enqueue(shape, calcPriority(shape));
+
+					},
 					uprootPlanter: function() {
 						scene.remove(root);
 						scene.remove(potGroup);
@@ -466,6 +449,7 @@
 
 				gui.add(options, 'createRoot').name('Plant a new seed');
 				gui.add(options, 'addChild').name('Grow planter');
+				gui.add(options, 'scaleShape').name('Scale shape');
 				gui.add(options, 'uprootPlanter').name('Uproot planter');
 				// gui.add(options, 'sunPosition', 0, 360).name('Move sun');
 
@@ -502,11 +486,11 @@
 
 
 			class Pot {
-			  constructor(_parent = null, _size = 10)
+			  constructor(_parent = null, _size = 10, _height = 10)
 			  {
 					this.parent = _parent;
 					this.numChildren = 0;
-			    this.outerMesh = new THREE.Mesh(this.getGeom(_size), material);
+			    this.outerMesh = new THREE.Mesh(this.getGeom(_size, _height), material);
 					//console.log("geomtype: " + this.getGeom(_size));
 			    this.shelledMesh;
 			    this.shell();
@@ -522,34 +506,59 @@
 
 			  setPosition(x, y, z) {
 					this.shelledMesh.position.set(x, y, z);
-					// this.outerMesh.position.set(x, y, z);
 			  }
 
 				// returns a Geometry object with the inputted size parameter
-				getGeom(size) {
+				getGeom(size, height) {
 					switch(geomType) {
 						case 'cube':
-							return new THREE.BoxGeometry( size, size, size );
+							return new THREE.BoxGeometry( size, height, size );
 						case 'cylinder':
-							return new THREE.CylinderGeometry( size, size, size, 32, 32 );
+							return new THREE.CylinderGeometry( size, size, height, 32, 32 );
 						case 'sphere':
 							return new THREE.SphereGeometry( size, 32, 32);
 					}
 				}
 
-				// scale(parentSize) {
-				// 	// calculate random number from range(min,max)
-				// 	var min = 0.9;
-				// 	var max = 1.9;
-				// 	var childSize = 0;
-				//
-				// 	// adding condition to have consistent wallThickness
-				// 	while (childSize < wallThickness*5) {
-				// 		// childSize = Math.floor(parentSize * (Math.random()*(max-min))+min);
-				// 		childSize = parentSize * (Math.random()*(max-min))+min;
-				// 	}
-				// 	return childSize;
-				// }
+				scaleAllRandom() {
+					var parentSize = 0;
+					if (this.parent != null) {
+						parentSize = this.parent.getSize();
+					}
+					// calculate random number from range(min,max)
+					var min = 0.9;
+					var max = 1.9;
+					var childSize = parentSize * (Math.random()*(max-min)+min);
+					console.log("childSize " + childSize);
+
+					// max size allowed
+					if (childSize > 50) {
+						childSize = 15;
+					}
+					if (childSize < wallThickness * 3) {
+						childSize = wallThickness * 3;
+					}
+
+					var meshPosition = this.getPosition();
+					potGroup.remove(this.shelledMesh);
+					this.outerMesh = new THREE.Mesh(this.getGeom(childSize), material);
+					this.shell();
+					this.setPosition(meshPosition.x, -5 + (this.getHeight()/2), meshPosition.z);
+					potGroup.add(this.shelledMesh);
+				}
+
+				scaleY() {
+					var meshPosition = this.getPosition();
+					potGroup.remove(this.shelledMesh);
+
+					var newHeight = this.getHeight() * 1.1;
+					var scaledPotY = new Pot(this.parent, this.getSize(), newHeight);
+					scaledPotY.setPosition(meshPosition.x, -5 + scaledPotY.getHeight()/2, meshPosition.z);
+					console.log("supposed scaledY: " + newHeight);
+					console.log("scaledY: " + scaledPotY.getHeight());
+					potGroup.add(scaledPotY.shelledMesh);
+					return scaledPotY;
+				}
 
 			  shell() {
 			    var innerGeom = this.getInnerGeom(geomType);
@@ -567,7 +576,6 @@
 					this.shelledMesh.castShadow = true; //default is false
 			    this.shelledMesh.receiveShadow = false; //default
 
-					// scene.add(this.shelledMesh);
 			  }
 
 				// helper function for creating a new object.
@@ -580,6 +588,17 @@
 						 return this.outerMesh.geometry.parameters.radiusTop;
 					 case 'sphere':
 						 return this.outerMesh.geometry.parameters.radius;
+				 }
+			 }
+
+			 getHeight() {
+				 switch(geomType) {
+					 case 'cube':
+						 return this.outerMesh.geometry.parameters.height;
+					 case 'cylinder':
+						 return this.outerMesh.geometry.parameters.height;
+					 case 'sphere':
+						 return this.outerMesh.geometry.parameters.radius * 2;
 				 }
 			 }
 
