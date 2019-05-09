@@ -471,15 +471,9 @@
 					}
 				}
 
-				// scale(multiplier) {
-				// 	console.log("before thickness:" + this.outerMesh.geometry.parameters.width);
-				// 	// this.outerMesh.geometry.scale(multiplier, multiplier, multiplier);
-				// 	this.outerMesh.scale.set(multiplier, multiplier, multiplier);
-				// 	// this.outerMesh.updateMatrix();
-				// 	console.log("multiplier: " + multiplier);
-				// 	console.log("afterthickness:" + this.outerMesh.geometry.parameters.width);
-				// 	this.shell();
-				// }
+				scale(multiplier) {
+					
+				}
 
 			  shell() {
 			    var innerGeom = this.getInnerGeom(geomType);
@@ -498,17 +492,7 @@
 			    this.shelledMesh.receiveShadow = false; //default
 
 					scene.add(this.shelledMesh);
-
-					// if (this.parent == null) {
-					// 	scene.add(this.shelledMesh);
-					// } else {
-					// 	this.parent.shelledMesh.add(this.shelledMesh);
-					// }
 			  }
-
-				display() {
-
-				}
 
 				// helper function for creating a new object.
 			 // turns the solid geometry into a shell, with specified wall thickness
