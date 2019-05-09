@@ -53,7 +53,7 @@
 										//{BoxGeometry, CylinderGeometry, SphereGeometry, etc.}
 			var geomType = 'cube'; // a String that tells you the type of geometry
 			var material = new THREE.MeshLambertMaterial( {color: 0x69ff00, wireframe: false} ); //0x69ff00 0x47ff00
-			var wallThickness = 1.0;
+			var wallThickness = 0.5;
 			var plantQueue;
 			var exportedRoot;
 			var potGroup = new THREE.Group();
@@ -63,6 +63,9 @@
 			var maxX;
 			var minZ;
 			var maxZ;
+
+			// timer variables
+			var time = 500;
 
 			function init() {
 
@@ -136,8 +139,8 @@
 				scene.add( sunControl );
 
 				// FLOOR
-				// var floorMaterial = new THREE.MeshLambertMaterial( { color: 0x2DA100 } );
-				var floorMaterial = new THREE.MeshLambertMaterial( { color: 0x00000, wireframe: true } );
+				var floorMaterial = new THREE.MeshLambertMaterial( { color: 0x2DA100 } );
+				// var floorMaterial = new THREE.MeshLambertMaterial( { color: 0x00000, wireframe: true } );
 				var floorGeometry = new THREE.CylinderGeometry(70, 70, 2, 64, 64);
 				var floor = new THREE.Mesh(floorGeometry, floorMaterial);
 				floor.position.y = -6;
@@ -162,6 +165,32 @@
 
 				// creating Priority queue for planter
 				plantQueue = new PriorityQueue();
+
+				// start timer
+				// setInterval(function(){
+				// 	var numPots = plantQueue.items.length;
+				// 	if (numPots > 0) {
+				// 		console.log("numPots " + numPots);
+				// 		var index = Math.floor(getRandomInRange(0, numPots));
+				// 		console.log("index " + index);
+				// 		var shape = plantQueue.getItem(index).element;
+				// 		console.log("height " + shape.getHeight());
+				// 		console.log("size " + shape.getSize());
+				//
+				// 		// while (shape.getHeight() > wallThickness * 2) {
+				// 		// 	index = getRandomInRange(0, numPots);
+				// 		// 	var shape = plantQueue.getItem(index).element;
+				// 		// }
+				// 		plantQueue.removeItem(index);
+				//
+				// 		var meshPosition = shape.getPosition();
+				// 		potGroup.remove(shape.shelledMesh);
+				//
+				// 		shape = shape.scaleY(0.9);
+				// 		potGroup.add(shape.shelledMesh);
+				// 		plantQueue.enqueue(shape, calcPriority(shape));
+				// 	}
+				// }, time);
 			}
 
 			// creates the root of the pot (the base shape)
@@ -199,6 +228,10 @@
 				priority = calcDistance(sun, child);
 				// console.log(priority);
 				return priority;
+			}
+
+			function getRandomInRange(min, max) {
+		    return Math.random() * (max - min) + min;
 			}
 
 
@@ -338,15 +371,6 @@
 			}
 
 			// 3D PRINTING FUNCTIONS
-
-			function shrink() {
-				// console.log("shrink");
-				// console.log("potgroup: " + (potGroup));
-			  potGroup.scale.set(0.9,0.9,0.9);
-				// scene.add(potGroup);
-			}
-
-
 			function exportSTL(mesh) {
 				var result = exporter.parse( mesh );
 		    saveString( result, 'pot.stl' );
@@ -388,7 +412,7 @@
 							var parent = plantQueue.front().element;
 							if (parent.numChildren > maxChildren) {
 								plantQueue.dequeue();
-								// grow pot in y-dir if max num children
+								// // grow pot in y-dir if max num children
 								// var parentHeight = parent.getHeight();
 								// if (parentHeight > 2 * parent.getSize()) {
 								// 	plantQueue.dequeue();
@@ -402,15 +426,22 @@
 						}
 				  },
 					scaleShape: function() {
-						var shape = plantQueue.dequeue().element;
+						var index = 0;
+						var shape = plantQueue.getItem(index).element;
+						console.log("height " + shape.getHeight());
+						console.log("size " + shape.getSize());
+						while (shape.getHeight() > shape.getSize() * 3) {
+							index +=1;
+							var shape = plantQueue.getItem(index).element;
+						}
+						plantQueue.removeItem(index);
 
 						var meshPosition = shape.getPosition();
 						potGroup.remove(shape.shelledMesh);
 
-						shape = shape.scaleY();
+						shape = shape.scaleY(1.1);
 						potGroup.add(shape.shelledMesh);
 						plantQueue.enqueue(shape, calcPriority(shape));
-
 					},
 					uprootPlanter: function() {
 						scene.remove(root);
@@ -437,8 +468,26 @@
 						if (root == null) {
 							alert("Plant your seed first!");
 						} else {
-							//console.log(root.groupedMeshes.children);
-							shrink();
+							var numPots = plantQueue.items.length;
+							console.log("numPots " + numPots);
+							var index = Math.floor(getRandomInRange(0, numPots));
+							console.log("index " + index);
+							var shape = plantQueue.getItem(index).element;
+							console.log("height " + shape.getHeight());
+							console.log("size " + shape.getSize());
+
+							// while (shape.getHeight() > wallThickness * 2) {
+							// 	index = getRandomInRange(0, numPots);
+							// 	var shape = plantQueue.getItem(index).element;
+							// }
+							plantQueue.removeItem(index);
+
+							var meshPosition = shape.getPosition();
+							potGroup.remove(shape.shelledMesh);
+
+							shape = shape.scaleY(0.9);
+							potGroup.add(shape.shelledMesh);
+							plantQueue.enqueue(shape, calcPriority(shape));
 						}
 					}
 				};
@@ -514,7 +563,7 @@
 						case 'cube':
 							return new THREE.BoxGeometry( size, height, size );
 						case 'cylinder':
-							return new THREE.CylinderGeometry( size, size, height, 32, 32 );
+							return new THREE.CylinderGeometry( size, size*1.7, height, 32, 32 );
 						case 'sphere':
 							return new THREE.SphereGeometry( size, 32, 32);
 					}
@@ -547,15 +596,13 @@
 					potGroup.add(this.shelledMesh);
 				}
 
-				scaleY() {
+				scaleY(scalingFactor) {
 					var meshPosition = this.getPosition();
 					potGroup.remove(this.shelledMesh);
 
-					var newHeight = this.getHeight() * 1.1;
+					var newHeight = this.getHeight() * scalingFactor;
 					var scaledPotY = new Pot(this.parent, this.getSize(), newHeight);
 					scaledPotY.setPosition(meshPosition.x, -5 + scaledPotY.getHeight()/2, meshPosition.z);
-					console.log("supposed scaledY: " + newHeight);
-					console.log("scaledY: " + scaledPotY.getHeight());
 					potGroup.add(scaledPotY.shelledMesh);
 					return scaledPotY;
 				}
@@ -609,14 +656,15 @@
 				getInnerGeom() {
 			    var outerSize = this.getSize();
 			    var innerSize = this.getInnerSize();
+					var height = this.getHeight();
 
 			    switch(geomType) {
 			      case 'cube':
-			        return new THREE.CubeGeometry( innerSize, outerSize*2, innerSize );
+			        return new THREE.CubeGeometry( innerSize, height*2, innerSize );
 			      case 'cylinder':
-			        return new THREE.CylinderGeometry( innerSize, innerSize, outerSize*2, 32, 32 );
+			        return new THREE.CylinderGeometry( innerSize, innerSize, height*2, 32, 32 );
 			      case 'sphere':
-			        return new THREE.CylinderGeometry( innerSize, innerSize, outerSize*2, 32, 32);
+			        return new THREE.CylinderGeometry( innerSize, innerSize, height*2, 32, 32);
 			    }
 			  }
 
@@ -636,6 +684,7 @@
 				getBottomPlateMesh() {
 					var outerSize = this.getSize();
 			    var innerSize = this.getInnerSize();
+					var height = this.getHeight();
 					var position = this.getOuterMeshPosition();
 					var bottomPlateGeom;
 					var bottomPlateMesh;
@@ -645,19 +694,19 @@
 			        bottomPlateGeom = new THREE.CubeGeometry( outerSize, wallThickness, outerSize );
 			        bottomPlateMesh = new THREE.Mesh(bottomPlateGeom, material);
 			        bottomPlateMesh.position.set(position.x, position.y, position.z);
-			        bottomPlateMesh.position.setY(position.y - (outerSize/2) + (wallThickness/2));
+			        bottomPlateMesh.position.setY(position.y - (height/2) + (wallThickness/2));
 							break;
 			      case 'cylinder':
 			        bottomPlateGeom = new THREE.CylinderGeometry( outerSize, outerSize, wallThickness, 32, 32 );
 			        bottomPlateMesh = new THREE.Mesh(bottomPlateGeom, material);
 			        bottomPlateMesh.position.set(position.x, position.y, position.z);
-			        bottomPlateMesh.position.setY(position.y - (outerSize/2) + (wallThickness/2));
+			        bottomPlateMesh.position.setY(position.y - (height/2) + (wallThickness/2));
 							break;
 			      case 'sphere':
 			        bottomPlateGeom = new THREE.CylinderGeometry( innerSize, innerSize, wallThickness, 32, 32)
 			        bottomPlateMesh = new THREE.Mesh(bottomPlateGeom, material);
 			        bottomPlateMesh.position.set(position.x, position.y, position.z);
-			        bottomPlateMesh.position.setY(position.y - (outerSize) + (wallThickness*1.5));
+			        bottomPlateMesh.position.setY(position.y - (height) + (wallThickness*1.5));
 							break;
 			    }
 					return bottomPlateMesh;

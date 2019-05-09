@@ -55,7 +55,7 @@ class PriorityQueue {
     if (this.isEmpty())
       return "Underflow";
     return this.items.shift();
-    }
+  }
 
     // front function
     front() {
@@ -64,6 +64,24 @@ class PriorityQueue {
     if (this.isEmpty())
       return "No elements in Queue";
     return this.items[0];
+    }
+
+    frontRange(numItems) {
+      if (this.isEmpty())
+        return "No elements in Queue";
+      return this.items.slice(0,numItems);
+    }
+
+    getItem(index) {
+      if (this.isEmpty())
+        return "No elements in Queue";
+      return this.items[index];
+    }
+
+    removeItem(index) {
+      if (this.isEmpty())
+        return "No elements in Queue";
+      this.items.splice(index,1);
     }
 
     // rear function
