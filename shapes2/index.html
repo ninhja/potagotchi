@@ -189,14 +189,15 @@
 				// calculate random number from range(min,max)
 				var min = 0.7;
 				var max = 1.5;
-				var childSize = wallThickness*3;
-
-				// adding condition to have consistent wallThickness
-				while (childSize <= 15) {
-					// childSize = Math.floor(parentSize * (Math.random()*(max-min))+min);
-					childSize = parentSize * (Math.random()*(max-min)+min);
-				}
+				var childSize = parentSize * (Math.random()*(max-min)+min);
 				console.log("childSize " + childSize);
+				// max size allowed
+				if (childSize > 15) {
+					childSize = 15;
+				}
+				if (childSize < wallThickness * 3) {
+					childSize = wallThickness * 3;
+				}
 				return childSize;
 			}
 
